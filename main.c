@@ -27,7 +27,7 @@ static void plot(void);
 extern int mips32_plot(param_t *);
 
 /*
- * Par�metros globales.
+ * Parametros globales.
  */
 
 int x_res = 640;		/* Ancho de imagen por defecto. */
@@ -36,9 +36,9 @@ float upper_left_re = -1;	/* Extremo superior izquierzo (re). */
 float upper_left_im = +1;	/* Extremo superior izquierzo (im). */
 float lower_right_re = 1;	/* Extremo inferior derecho (re). */
 float lower_right_im = -1;	/* Extremo inferior derecho (im). */
-float c_param_re = 0.285;	/* Par�metro C (re). */
-float c_param_im = -0.01;	/* Par�metro C (im). */
-/* XXX Para qu� est�?? */
+float c_param_re = 0.285;	/* Parametro C (re). */
+float c_param_im = -0.01;	/* Parametro C (im). */
+/* XXX Para que esta?? */
 //void (*draw)(FILE *) = NULL;	/* Metodo para generar el fractal. */
 FILE *output;
 
