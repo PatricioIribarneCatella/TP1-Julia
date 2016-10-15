@@ -114,14 +114,20 @@ loop_brightness:
     blt t2, t6, assign_brightness
     #Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
     mv.s f16, f4
-    mul.s f16, f16, f16    # zr^2
+    mul.s f16, f16, f16    #  f16 <- zr^2
     mv.s f17, f1
-    mul.s f17, f17, f17    # zi^2
-    add.s f18, f16, f17    # zr^2 + zi^2
+    mul.s f17, f17, f17    # f17 <- zi^2 
+    add.s f18, f16, f17    # f18 <- zr^2 + zi^2 f
+
+    /*Proximas 3 lineas son
+    if ((absz = zr*zr + zi*zi) > 4.0f)
+            break;
+    */
+    li.s f10, 4.0
+    c.lt.s f10, f18 #  4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
+    bc1t assign_brightness# salta cuando ese codigo esta en true (1)
 
     /* a traducir
-        if ((absz = zr*zr + zi*zi) > 4.0f)
-            break;
         sr = zr * zr - zi * zi + cpr;
         si = 2 * zr * zi + cpi;
         zr = sr;
