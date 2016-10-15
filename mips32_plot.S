@@ -52,9 +52,26 @@
 
 mips32_plot:
     /*
-        Preparar el stack frame aca
+        Preparacion del stack frame.
+        Estado del frame:
+            General Register Save Area (SRA)- Usada - 8 bytes - SP y GP. Al ser leaf no necesito guardar RA
+            Float Regs Area - No usada - 0 bytes - No guardamos variables flotantes locales
+            Local Area - No usada  - 0 bytes - Por ahora no guardamos variables locales
+            Arg Building Area - No usada - 0 bytes - No  se llama a ninguna otra funcion
     */
 
+    # debugging info: descripcion del stack frame
+    .frame  $fp, 8, ra # $fp: registro usado como frame pointer
+                        # 40: tamañodel stack frame
+                        # ra: registro que almacena el return address
+
+    # creo stack frame
+    subu    sp, sp, 8  # 2 (SRA) + 0 (LTA) + 0 (ABA)
+    #El gp y FP van en las posiciones mas altas del stack frame
+    sw gp, 0(sp)
+    sw  $fp, 4(sp)
+    #A partir de ahora se usa directamente el fp como sp
+    move $fp,sp
 
 
     /*
