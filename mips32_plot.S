@@ -62,7 +62,7 @@ mips32_plot:
 
     # debugging info: descripcion del stack frame
     .frame  $fp, 8, ra # $fp: registro usado como frame pointer
-                        # 40: tamañodel stack frame
+                        # 8: tamañodel stack frame
                         # ra: registro que almacena el return address
 
     # creo stack frame
@@ -145,5 +145,5 @@ return:
     addu    sp, sp, 8
     # vuelvo a funcion llamante
     jr ra
-    
+
 .end mips32_plot
