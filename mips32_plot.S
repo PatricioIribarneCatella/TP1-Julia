@@ -97,7 +97,7 @@ mips32_plot:
     li t4, 0    # y = 0
 
 loop_im: # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
-    blt t1, t4, exit    # brach on y > y_res
+    blt t1, t4, return    # brach on y > y_res
     addiu t4, t4, 1     # ++y
     sub.s f5, f5, f7    # UL_im - dy (son floats)
     li t5, 0            # x = 0 para cada llamada a loop_re
@@ -137,4 +137,13 @@ assign_brightness:
     */
     j loop_re
 
+
+return:
+    lw gp, 0(sp)
+    lw  $fp, 4(sp)
+    # destruyo stack frame
+    addu    sp, sp, 8
+    # vuelvo a funcion llamante
+    jr ra
+    
 .end mips32_plot
