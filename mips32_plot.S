@@ -113,9 +113,9 @@ loop_re:
 loop_brightness:
     blt t2, t6, assign_brightness
     #Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
-    mv.s f16, f4
+    mov.s $f16, $f4
     mul.s $f16, $f16, $f16    #  f16 <- zr^2
-    mv.s $f17, $f1
+    mov.s $f17, $f1
     mul.s $f17, $f17, $f17    # f17 <- zi^2 
     add.s $f18, $f16, $f17    # f18 <- zr^2 + zi^2 f
 
