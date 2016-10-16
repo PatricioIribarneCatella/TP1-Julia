@@ -60,22 +60,24 @@ mips32_plot:
             Arg Building Area - No usada - 0 bytes - No  se llama a ninguna otra funcion
     */
 
-    # debugging info: descripcion del stack frame
+                        # debugging info: descripcion del stack frame
     .frame  $fp, 12, ra # $fp: registro usado como frame pointer
-                        # 12: tamañodel stack frame
+                        # 12: tamaño del stack frame
                         # ra: registro que almacena el return address
 
-    # creo stack frame
-    subu    sp, sp, 12  # 2 (SRA) + 1 (LTA) + 0 (ABA)
+                     # creo stack frame
+    subu sp, sp, 12  # 2 (SRA) + 1 (LTA) + 0 (ABA)
 
-    #El gp y FP van en las posiciones mas altas del stack frame
+                # El gp y FP van en las posiciones mas altas del stack frame
     sw gp, 4(sp)
-    sw  $fp, 8(sp)
-    #A partir de ahora se usa directamente el fp como sp
+    sw $fp, 8(sp)
+                # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
-     #s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
-    sw s8, 0(sp)
-
+    
+                # s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
+    sw s8, 0($fp)
+                # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
+    sw a0, 12($fp)
 
     /*
         $f4..$f10 temporary registers.
@@ -92,10 +94,11 @@ mips32_plot:
             t9 temporalmente ocupado. se usa en assign_brightness. Disponible para otros usos por fuera
             s8 permanentemente ocupado. Tamanio buffer
     */
-    #El buffer empieza con 0 bytes ocupados
-    move s8, $0
 
-    #Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
+                # El buffer empieza con 0 bytes ocupados
+    move s8, $0
+                # Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
+
     l.s $f4, UL_re(a0)
     l.s $f5, UL_im(a0)
     l.s $f6, d_re(a0)
@@ -108,27 +111,27 @@ mips32_plot:
     lw t2, shades(a0)
     lw t3, fd(a0)
 
-    sub.s $f4, $f4, $f6    # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
+    sub.s $f4, $f4, $f6     # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
 
-    li t4, 0    # y = 0
+    li t4, 0                # y = 0
 
-loop_im: # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
-    blt t1, t4, return    # brach on y > y_res
-    addiu t4, t4, 1     # ++y
-    sub.s $f5, $f5, $f7    # UL_im - dy (son floats)
-    li t5, 0            # x = 0 para cada llamada a loop_re
+loop_im:                    # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
+    blt t1, t4, return      # brach on y > y_res
+    addiu t4, t4, 1         # ++y
+    sub.s $f5, $f5, $f17    # UL_im - dy (son floats)
+    li t5, 0                # x = 0 para cada llamada a loop_re
     j loop_re
 
 loop_re:
-    blt t0, t5, loop_im # branch on x > x_res
-    addiu t5, t5, 1     # ++x
-    add.s $f4, $f4, $f6    # UL_re + dx
-    li t6, 0            # c = 0 para cada llamada a loop_brightness
+    blt t0, t5, loop_im     # branch on x > x_res
+    addiu t5, t5, 1         # ++x
+    add.s $f4, $f4, $f6     # UL_re + dx
+    li t6, 0                # c = 0 para cada llamada a loop_brightness
     j loop_brightness
 
 loop_brightness:
     blt t2, t6, assign_brightness
-    #Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
+                # Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
     mov.s $f16, $f4
     mul.s $f16, $f16, $f16    #  f16 <- zr^2
     mov.s $f17, $f1
@@ -140,8 +143,8 @@ loop_brightness:
             break;
     */
     li.s $f10, 4.0
-    c.lt.s $f10, $f18 #  4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
-    bc1t assign_brightness# salta cuando ese codigo esta en true (1)
+    c.lt.s $f10, $f18           # 4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
+    bc1t assign_brightness      # salta cuando ese codigo esta en true (1)
 
     /* a traducir
         sr = zr * zr - zi * zi + cpr;
@@ -155,23 +158,20 @@ loop_brightness:
 
 assign_brightness:
  
-    #Hago de cuenta que tengo el valor de brigthness en el resgistro t8
-    la t9, buffer #Guardo la direccion de memoria del buffer en t9
-    addu t9, t9, s0 # Le sumo los bytes ocupados
-    sw t8, 0(t9) #Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
-    addu s0, s0, 4 #Actualizo la cantidad de bytes ocupados 
+        # Hago de cuenta que tengo el valor de brigthness en el resgistro t8
+    la t9, buffer       # Guardo la direccion de memoria del buffer en t9
+    addu t9, t9, s0     # Le sumo los bytes ocupados
+    sw t8, 0(t9)        # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
+    addu s0, s0, 4      # Actualizo la cantidad de bytes ocupados 
 
     j loop_re
-
 
 return:
     lw s8, 0(sp) 
     lw gp, 4(sp)
     lw  $fp, 8(sp)
-    # destruyo stack frame
-    addu    sp, sp, 12
-    # vuelvo a funcion llamante
-    jr ra
+    addu sp, sp, 12  # destruyo stack frame
+    jr ra            # vuelvo a funcion llamante
 
 buffer: .space BUF_SZ #reservo 8KiB para el buffer
 
