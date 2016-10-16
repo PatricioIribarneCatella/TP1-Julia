@@ -123,8 +123,8 @@ loop_brightness:
     if ((absz = zr*zr + zi*zi) > 4.0f)
             break;
     */
-    li.s f10, 4.0
-    c.lt.s f10, f18 #  4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
+    li.s $f10, 4.0
+    c.lt.s $f10, $f18 #  4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
     bc1t assign_brightness# salta cuando ese codigo esta en true (1)
 
     /* a traducir
