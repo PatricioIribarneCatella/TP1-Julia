@@ -80,33 +80,33 @@ mips32_plot:
     */
 
     #Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
-    lw f4, UL_re(a0)
-    lw f5, UL_im(a0)
-    lw f6, d_re(a0)
-    lw f7, d_im(a0)
-    lw f8, cp_re(a0)
-    lw f9, cp_im(a0)
+    l.s $f4, UL_re(a0)
+    l.s $f5, UL_im(a0)
+    l.s $f6, d_re(a0)
+    l.s $f7, d_im(a0)
+    l.s $f8, cp_re(a0)
+    l.s $f9, cp_im(a0)
 
     lw t0, x_res(a0)
     lw t1, y_res(a0)
     lw t2, shades(a0)
     lw t3, fd(a0)
 
-    sub.s f4, f4, f6    # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
+    sub.s $f4, $f4, $f6    # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
 
     li t4, 0    # y = 0
 
 loop_im: # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
     blt t1, t4, return    # brach on y > y_res
     addiu t4, t4, 1     # ++y
-    sub.s f5, f5, f7    # UL_im - dy (son floats)
+    sub.s $f5, $f5, $f7    # UL_im - dy (son floats)
     li t5, 0            # x = 0 para cada llamada a loop_re
     j loop_re
 
 loop_re:
     blt t0, t5, loop_im # branch on x > x_res
     addiu t5, t5, 1     # ++x
-    add.s f4, f4, f6    # UL_re + dx
+    add.s $f4, $f4, $f6    # UL_re + dx
     li t6, 0            # c = 0 para cada llamada a loop_brightness
     j loop_brightness
 
@@ -114,10 +114,10 @@ loop_brightness:
     blt t2, t6, assign_brightness
     #Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
     mv.s f16, f4
-    mul.s f16, f16, f16    #  f16 <- zr^2
-    mv.s f17, f1
-    mul.s f17, f17, f17    # f17 <- zi^2 
-    add.s f18, f16, f17    # f18 <- zr^2 + zi^2 f
+    mul.s $f16, $f16, $f16    #  f16 <- zr^2
+    mv.s $f17, $f1
+    mul.s $f17, $f17, $f17    # f17 <- zi^2 
+    add.s $f18, $f16, $f17    # f18 <- zr^2 + zi^2 f
 
     /*Proximas 3 lineas son
     if ((absz = zr*zr + zi*zi) > 4.0f)
