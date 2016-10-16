@@ -79,6 +79,17 @@ mips32_plot:
     /*
         $f4..$f10 temporary registers.
         $f16..$f18 temporary registers.
+
+        Guia de Registros usados:
+            Un registro permanente ocupado no puede ser utilizado en otros lados.
+            Un registro temporalmente ocupado puede ser usado para operaciones intermedias en varios lados.
+            Si no es mencionado no tiene ningun uso
+
+            f4 a f9 permanentemente ocupados. 
+            t0 a t6 permanente (creo, hay que revisar) ocupados.
+            t8 permanente ocupado. Aca guardo el brillo del ultimo punto calculado
+            t9 temporalmente ocupado. se usa en assign_brightness. Disponible para otros usos por fuera
+            s8 permanentemente ocupado. Tamanio buffer
     */
 
     #Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
@@ -140,13 +151,16 @@ loop_brightness:
     j loop_brightness
 
 assign_brightness:
-    #Hago de cuenta que tengo el valor de brigthness en el resgistro 0
-
+    #Hago de cuenta que tengo el valor de brigthness en el resgistro t8
+    la t9, buffer #Guardo la direccion de memoria del buffer en t9
+    addu t9, t9, s0 # Le sumo los bytes ocupados
+    sw t8, 0(t9) #Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
+    addu s0, s0, 4 #Actualizo la cantidad de bytes ocupados 
     j loop_re
 
 
 return:
-    lw s8, 0(sp)
+    lw s8, 0(sp) 
     lw gp, 4(sp)
     lw  $fp, 8(sp)
     # destruyo stack frame
