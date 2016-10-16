@@ -1,7 +1,7 @@
 #include <mips/regdef.h>
 #include <sys/syscall.h>
 
-#ifndef BUF_SZ 8192
+#ifndef BUF_SZ
 #define BUF_SZ 8192
 #endif
 
