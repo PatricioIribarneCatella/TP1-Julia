@@ -73,7 +73,7 @@ mips32_plot:
     sw $fp, 8(sp)
                 # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
-    
+
                 # s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
     sw s8, 0($fp)
                 # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
@@ -131,14 +131,16 @@ loop_re:
 
 loop_brightness:
     blt t2, t6, assign_brightness
+
                 # Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
     mov.s $f16, $f4
-    mul.s $f16, $f16, $f16    #  f16 <- zr^2
-    mov.s $f17, $f1
-    mul.s $f17, $f17, $f17    # f17 <- zi^2 
-    add.s $f18, $f16, $f17    # f18 <- zr^2 + zi^2 f
+    mul.s $f16, $f16, $f16    # f16 <- zr^2
+    mov.s $f17, $f5
+    mul.s $f17, $f17, $f17    # f17 <- zi^2
 
-    /*Proximas 3 lineas son
+    add.s $f18, $f16, $f17    # f18 <- zr^2 + zi^2
+
+    /* Proximas 3 lineas son:
     if ((absz = zr*zr + zi*zi) > 4.0f)
             break;
     */
@@ -146,18 +148,30 @@ loop_brightness:
     c.lt.s $f10, $f18           # 4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
     bc1t assign_brightness      # salta cuando ese codigo esta en true (1)
 
-    /* a traducir
+    /* Proximas 10 lineas son:
         sr = zr * zr - zi * zi + cpr;
         si = 2 * zr * zi + cpi;
         zr = sr;
         zi = si;
     */
 
+    mul.s $f16, $f4, $f4    # zr * zr
+    mul.s $f17, $f5, $f5    # zi * zi
+    sub.s $f16, $f16, $f17  # zr * zr - zi * zi
+    add.s $f16, $f16, $f8   # f16 <- zr * zr - zi * zi + cpr
+
+    mul.s $f17, $f4, $f5    # zr * zi
+    li.s $f10, 2.0
+    mul.s $f17, $f17, $f10  # 2 * zr * zi
+    add.s $f17, $f17, $f9   # f17 <- 2 * zr * zi + cpi
+
+    mov.s $f4, $f16     # f4 <- zr * zr - zi * zi + cpr
+    mov.s $f5, $f17     # f5 <- 2 * zr * zi + cpi
+
     addiu t6, t6, 1     # ++c
     j loop_brightness
 
 assign_brightness:
- 
         # Hago de cuenta que tengo el valor de brigthness en el resgistro t8
     la t9, buffer       # Guardo la direccion de memoria del buffer en t9
     addu t9, t9, s0     # Le sumo los bytes ocupados
