@@ -77,7 +77,7 @@ mips32_plot:
     /*
         $f4..$f10 temporary registers.
         $f16..$f18 temporary registers.
-    /*
+    */
 
     #Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
     lw f4, UL_re(a0)
