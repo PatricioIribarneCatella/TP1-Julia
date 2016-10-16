@@ -66,7 +66,7 @@ mips32_plot:
                         # ra: registro que almacena el return address
 
     # creo stack frame
-    subu    sp, sp, 8  # 2 (SRA) + 0 (LTA) + 0 (ABA)
+    subu    sp, sp, 12  # 2 (SRA) + 1 (LTA) + 0 (ABA)
     #s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
     sw s8, 0(sp)
     #El gp y FP van en las posiciones mas altas del stack frame
