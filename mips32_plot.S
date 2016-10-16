@@ -67,7 +67,6 @@ mips32_plot:
 
     # creo stack frame
     subu    sp, sp, 12  # 2 (SRA) + 1 (LTA) + 0 (ABA)
-    li  v0, 1           # service 1 is print integer
 
     #El gp y FP van en las posiciones mas altas del stack frame
     sw gp, 4(sp)
@@ -174,7 +173,6 @@ return:
     # vuelvo a funcion llamante
     jr ra
 
+buffer: .space BUF_SZ #reservo 8KiB para el buffer
+
 .end mips32_plot
-
-
-buffer: .space 8192 #reservo 8KiB para el buffer
