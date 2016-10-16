@@ -67,13 +67,15 @@ mips32_plot:
 
     # creo stack frame
     subu    sp, sp, 12  # 2 (SRA) + 1 (LTA) + 0 (ABA)
-    #s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
-    sw s8, 0(sp)
+    li  v0, 1           # service 1 is print integer
+
     #El gp y FP van en las posiciones mas altas del stack frame
     sw gp, 4(sp)
     sw  $fp, 8(sp)
     #A partir de ahora se usa directamente el fp como sp
     move $fp,sp
+     #s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
+    sw s8, 0(sp)
 
 
     /*
@@ -91,6 +93,8 @@ mips32_plot:
             t9 temporalmente ocupado. se usa en assign_brightness. Disponible para otros usos por fuera
             s8 permanentemente ocupado. Tamanio buffer
     */
+    #El buffer empieza con 0 bytes ocupados
+    move s8, $0
 
     #Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
     l.s $f4, UL_re(a0)
@@ -151,11 +155,13 @@ loop_brightness:
     j loop_brightness
 
 assign_brightness:
+ 
     #Hago de cuenta que tengo el valor de brigthness en el resgistro t8
     la t9, buffer #Guardo la direccion de memoria del buffer en t9
     addu t9, t9, s0 # Le sumo los bytes ocupados
     sw t8, 0(t9) #Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
     addu s0, s0, 4 #Actualizo la cantidad de bytes ocupados 
+
     j loop_re
 
 
@@ -164,7 +170,7 @@ return:
     lw gp, 4(sp)
     lw  $fp, 8(sp)
     # destruyo stack frame
-    addu    sp, sp, 8
+    addu    sp, sp, 12
     # vuelvo a funcion llamante
     jr ra
 
