@@ -12,3 +12,7 @@ $ make
 ## Ejecución
 
 $ ./tp1 -r ANCHOxALTO -c a+bi -C c+di -w AnchoRegionPlanoComplejo -H AltoRegionPlanoComplejo -o nombreImagen
+
+## Pruebas
+
+$ make pruebas
