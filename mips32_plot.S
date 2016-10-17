@@ -172,11 +172,12 @@ loop_brightness:
     j loop_brightness
 
 assign_brightness:
-        # Hago de cuenta que tengo el valor de brigthness en el resgistro t8
+    # Hago de cuenta que tengo el valor de brigthness en el resgistro t8
     la t9, buffer       # Guardo la direccion de memoria del buffer en t9
-    addu t9, t9, s0     # Le sumo los bytes ocupados
+    addu t9, t9, s8     # Le sumo los bytes ocupados
     sw t8, 0(t9)        # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
-    addu s0, s0, 4      # Actualizo la cantidad de bytes ocupados 
+    addu s8, s8, 4      # Actualizo la cantidad de bytes ocupados 
+    #Mi buffer actualmente es "infinito", pero en realidad hay que escribir cuando se llene y volver al principio
 
     j loop_re
 
@@ -187,6 +188,8 @@ return:
     addu sp, sp, 12  # destruyo stack frame
     jr ra            # vuelvo a funcion llamante
 
-buffer: .space BUF_SZ #reservo 8KiB para el buffer
-
 .end mips32_plot
+
+.data
+.align 2
+buffer: .space 4194304 #reservo mucho para el buffer, esto esta mal
