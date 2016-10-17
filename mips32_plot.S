@@ -175,7 +175,12 @@ assign_brightness:
     # Hago de cuenta que tengo el valor de brigthness en el resgistro t8
     sw t8, buffer(s8)        # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
     addu s8, s8, 4      # Actualizo la cantidad de bytes ocupados 
+    beq s8, BUF_SZ, vaciar_buffer #Si llene el buffer
+    j loop_re
 
+vaciar_buffer:
+    #Habria que hacer el syscall por aca. Se le puede cambiar el nombre a la etiqueta.
+    move s8, $0 #La cantidad de bytes ocupados es 0
     j loop_re
 
 return:
@@ -189,4 +194,4 @@ return:
 
 .data
 .align 2
-buffer: .space 4194304 #reservo mucho para el buffer, esto esta mal
+buffer: .space BUF_SZ #reservo mucho para el buffer, esto esta mal
