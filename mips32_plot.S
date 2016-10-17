@@ -111,7 +111,12 @@ mips32_plot:
     lw t2, shades(a0)
     lw t3, fd(a0)
 
-    /* Hacer un sys call-write para generar en header de la imagen con resolucion y max de intensidad*/
+    # Generacion de header
+    lw a0, t3
+    la a1, header
+    li a2, 3
+    li v0, 15
+    syscall # TODO: como printeo numeros como strings en un archivo?
 
     sub.s $f4, $f4, $f6     # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
 
@@ -177,11 +182,11 @@ loop_brightness:
 assign_brightness:
     sw t6, buffer(s8)               # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
     addu s8, s8, 4                  # Actualizo la cantidad de bytes ocupados 
-    beq s8, BUF_SZ, vaciar_buffer   # Si llene el buffer
+    beq s8, BUF_SZ, empty_buffer    # Si llene el buffer
     j loop_re
 
-vaciar_buffer:
-
+empty_buffer:
+    # TODO:
     /*Habria que hacer el syscall por aca. Se le puede cambiar el nombre a la etiqueta.*/
 
     move s8, $0     # La cantidad de bytes ocupados es 0
@@ -192,10 +197,11 @@ return:
     lw gp, 4(sp)
     lw  $fp, 8(sp)
     addu sp, sp, 12  # destruyo stack frame
-    jr ra            # vuelvo a funcion llamante
+    jr ra            # vuelvo a funcion llamadora
 
 .end mips32_plot
 
 .data
 .align 2
+header: .asciiz "P2\n"
 buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
