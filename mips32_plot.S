@@ -173,11 +173,8 @@ loop_brightness:
 
 assign_brightness:
     # Hago de cuenta que tengo el valor de brigthness en el resgistro t8
-    la t9, buffer       # Guardo la direccion de memoria del buffer en t9
-    addu t9, t9, s8     # Le sumo los bytes ocupados
-    sw t8, 0(t9)        # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
+    sw t8, buffer(s8)        # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
     addu s8, s8, 4      # Actualizo la cantidad de bytes ocupados 
-    #Mi buffer actualmente es "infinito", pero en realidad hay que escribir cuando se llene y volver al principio
 
     j loop_re
 
