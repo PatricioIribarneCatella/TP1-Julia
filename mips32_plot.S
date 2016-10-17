@@ -247,6 +247,6 @@ return:
 
 .data
 .align 2
+buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
 header: .asciiz "P2"
 sep: .asciiz " "
-buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
