@@ -111,6 +111,8 @@ mips32_plot:
     lw t2, shades(a0)
     lw t3, fd(a0)
 
+    /* Hacer un sys call-write para generar en header de la imagen con resolucion y max de intensidad*/
+
     sub.s $f4, $f4, $f6     # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
 
     li t4, 0                # y = 0
@@ -179,7 +181,9 @@ assign_brightness:
     j loop_re
 
 vaciar_buffer:
-        #Habria que hacer el syscall por aca. Se le puede cambiar el nombre a la etiqueta.
+
+    /*Habria que hacer el syscall por aca. Se le puede cambiar el nombre a la etiqueta.*/
+
     move s8, $0     # La cantidad de bytes ocupados es 0
     j loop_re
 
