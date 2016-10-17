@@ -55,9 +55,9 @@ mips32_plot:
         Preparacion del stack frame.
         Estado del frame:
             General Register Save Area (SRA)- Usada - 8 bytes - SP y GP. Al ser leaf no necesito guardar RA
-            Float Regs Area - No usada - 0 bytes - No guardamos variables flotantes locales
-            Local Area - No usada  - 4 bytes - s8 contiene el tamanio del buffer
-            Arg Building Area - No usada - 0 bytes - No  se llama a ninguna otra funcion
+            Float Regs Area (FRA) - No usada - 0 bytes - No guardamos variables flotantes locales
+            Local and Temporary Area (LTA) - Usada  - 4 bytes - s8 contiene el tamanio del buffer
+            Arg Building Area (ABA) - No usada - 0 bytes - No se llama a ninguna otra funcion
     */
 
                         # debugging info: descripcion del stack frame
@@ -111,12 +111,46 @@ mips32_plot:
     lw t2, shades(a0)
     lw t3, fd(a0)
 
-    # Generacion de header
-    lw a0, t3
-    la a1, header
-    li a2, 3
-    li v0, 15
-    syscall # TODO: como printeo numeros como strings en un archivo?
+     # Sys call-write para generar en header de la imagen con resolucion y max de intensidad
+                # text = "P2 x_res y_res shades"
+                # write(fd, text, len(text))
+
+    move a0, t3     # a0 <- fd
+
+                    # text = "P2"
+    la t4, header
+    sw t4, buffer(s8)
+    addu s8, s8, 4
+
+                    # text = "P2 "
+    la t4, sep
+    sw t4, buffer(s8)
+    addu s8, s8, 4
+
+                    # text = "P2 x_res "
+    sw t0, buffer(s8)
+    addu s8, s8, 4
+    sw t4, buffer(s8)
+    addu s8, s8, 4
+
+                    # text = "P2 x_res y_res "
+    sw t1, buffer(s8)
+    addu s8, s8, 4
+    sw t4, buffer(s8)
+    addu s8, s8, 4
+
+                    # text = "P2 x_res y_res shades"
+    sw t2, buffer(s8)
+    addu s8, s8, 4
+
+
+    la a1, buffer    # a1 <- buffer /*No estoy seguro de si es así*/
+    move a2, s8      # a2 <- len(text)
+
+    li v0, SYS_write
+    syscall
+
+    move s8, $0     # Pongo el tamaño del buffer nuevamente en cero
 
     sub.s $f4, $f4, $f6     # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
 
@@ -180,19 +214,29 @@ loop_brightness:
     j loop_brightness
 
 assign_brightness:
-    sw t6, buffer(s8)               # Guardo r0 en la posicion del buffer + bytes ocupados del buffer. Luego sera algo que contenga el brillo
-    addu s8, s8, 4                  # Actualizo la cantidad de bytes ocupados 
-    beq s8, BUF_SZ, empty_buffer    # Si llene el buffer
+    sw t6, buffer(s8)               # Guardo el brillo en la posicion del buffer + bytes ocupados del buffer
+    addu s8, s8, 4                  # Se actualiza la cantidad de bytes ocupados
+
+    la t4, sep                      # t4 <- " "
+    sw t4, buffer(s8)               # Guardo el espacio en el buffer
+    addu s8, s8, 4                 # Se actualiza la cantidad de bytes ocupados
+
+    beq s8, BUF_SZ, empty_buffer   # Si llene el buffer
     j loop_re
 
 empty_buffer:
-    # TODO:
-    /*Habria que hacer el syscall por aca. Se le puede cambiar el nombre a la etiqueta.*/
+    move a0, t3      # a0 <- fd
+    la a1, buffer    # a1 <- buffer /*No estoy seguro de si es así*/
+    move a2, s8      # a2 <- len(text)
+
+    li v0, SYS_write
+    syscall
 
     move s8, $0     # La cantidad de bytes ocupados es 0
     j loop_re
 
 return:
+    lw a0, 12(sp)
     lw s8, 0(sp) 
     lw gp, 4(sp)
     lw  $fp, 8(sp)
@@ -203,5 +247,6 @@ return:
 
 .data
 .align 2
-header: .asciiz "P2\n"
+header: .asciiz "P2"
+sep: .asciiz " "
 buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
