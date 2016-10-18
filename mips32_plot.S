@@ -116,19 +116,17 @@ mips32_plot:
                 # write(fd, text, len(text))
 
     move a0, t3     # a0 <- fd
-
-    la t4, header 	# text = "P2  "
-    sw t4, buffer(s8)
-    addu s8, s8, 4
-
-    la t4, sep
-    sw t4, buffer(s8)
-    addu s8, s8, 4
-
-    sw t0, buffer(s8)
-    addu s8, s8, 4
     
-    la a1, buffer
+    la t4, header   # P2
+
+    lw t4, 0(t4)
+
+    sw t4, buffer(s8)
+
+    addu s8, s8, 4
+
+    la a1, buffer   # a1 <- buffer
+
     move a2, s8     # a2 <- len(text)
 
     li v0, SYS_write
@@ -201,9 +199,10 @@ assign_brightness:
     sw t6, buffer(s8)               # Guardo el brillo en la posicion del buffer + bytes ocupados del buffer
     addu s8, s8, 4                  # Se actualiza la cantidad de bytes ocupados
 
-    la t4, sep                      # t4 <- " "
+    la t4, sep                      
+    lw t4, 0(t4)                    # t4 <- " "
     sw t4, buffer(s8)               # Guardo el espacio en el buffer
-    addu s8, s8, 4                 # Se actualiza la cantidad de bytes ocupados
+    addu s8, s8, 4                  # Se actualiza la cantidad de bytes ocupados
 
     beq s8, BUF_SZ, empty_buffer   # Si llene el buffer
     j loop_re
