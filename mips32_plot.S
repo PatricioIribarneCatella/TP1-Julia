@@ -117,35 +117,19 @@ mips32_plot:
 
     move a0, t3     # a0 <- fd
 
-                    # text = "P2"
-    la t4, header
+    la t4, header 	# text = "P2  "
     sw t4, buffer(s8)
     addu s8, s8, 4
 
-                    # text = "P2 "
     la t4, sep
     sw t4, buffer(s8)
     addu s8, s8, 4
 
-                    # text = "P2 x_res "
     sw t0, buffer(s8)
     addu s8, s8, 4
-    sw t4, buffer(s8)
-    addu s8, s8, 4
-
-                    # text = "P2 x_res y_res "
-    sw t1, buffer(s8)
-    addu s8, s8, 4
-    sw t4, buffer(s8)
-    addu s8, s8, 4
-
-                    # text = "P2 x_res y_res shades"
-    sw t2, buffer(s8)
-    addu s8, s8, 4
-
-
-    la a1, buffer    # a1 <- buffer /*No estoy seguro de si es así*/
-    move a2, s8      # a2 <- len(text)
+    
+    la a1, buffer
+    move a2, s8     # a2 <- len(text)
 
     li v0, SYS_write
     syscall
@@ -248,5 +232,5 @@ return:
 .data
 .align 2
 buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
-header: .asciiz "P2"
-sep: .asciiz " "
+header: .asciiz "P2  "
+sep: .asciiz "    "
