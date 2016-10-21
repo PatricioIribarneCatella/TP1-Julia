@@ -6,7 +6,7 @@
 #endif
 
 #ifndef BUF_SZ_AUX
-#define BUF_SZ_AUX 3
+#define BUF_SZ_AUX 10
 #endif
 
 #define UL_re 0
@@ -93,6 +93,7 @@ mips32_plot:
                 # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
     sw a0, 40($fp)
 
+
     /*
         $f4..$f10 temporary registers.
         $f16..$f18 temporary registers.
@@ -131,15 +132,34 @@ mips32_plot:
 
     la t4, header 	# P2
 
-    lw t4, 0(t4)
+    lw t4, 0(t4)    
 
     sw t4, buffer(s8)
 
     addu s8, s8, 4
 
+
+	move a0, t3     # a0 <- fd
+
+    la a1, buffer 	# a1 <- buffer
+
+    move a2, s8     # a2 <- len(text)
+
+    li v0, SYS_write
+    syscall
+
+    move a0, t3     # a0 <- fd
+
+    la a1, buffer 	# a1 <- buffer
+
+    move a2, s8     # a2 <- len(text)
+
+    li v0, SYS_write
+    syscall
+
     # itoa(x_res)
 
-    move a0, t0 	# a0 <- t0
+    move a0, t1 	# a0 <- t0
 
     move a1, s8 	# a1 <- s8 (el offset a partir del cual tiene que escribir en el buffer)
 
@@ -147,7 +167,9 @@ mips32_plot:
 
     jal ra, t9 		# call itoa(a0)
 
-    addu s8, s8, v0	# sumo los bytes que me devuelve itoa(a0) a s8
+    j return
+
+	addu s8, s8, v0	# sumo los bytes que me devuelve itoa(a0) a s8    
 
     move a0, t3     # a0 <- fd
 
@@ -264,7 +286,6 @@ return:
 */
 
 	.ent itoa
-
 itoa:
 
 	/*
@@ -297,7 +318,7 @@ itoa:
 
     beq a0, zero, return_0	# Si el numero es igual a cero
 
-    li t5, 2 				# Es el size de bufferAux y el indice del primer caracter del número
+    li t5, 9 				# Es el size de bufferAux y el indice del primer caracter del número
 
 for_itoa:
 	beq a0, zero, for_write 	# Condición de corte (val == 0)
@@ -350,6 +371,6 @@ return_f:
 buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
 	.align 2
 bufferAux: .space BUF_SZ_AUX
-
+	.align 2
 header: .asciiz "P2  "
 sep: .asciiz " "
