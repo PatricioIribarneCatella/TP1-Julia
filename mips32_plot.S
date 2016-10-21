@@ -90,6 +90,7 @@ mips32_plot:
     move $fp,sp
                 # s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
     sw s8, 16($fp)
+    sw s0, 20($fp)
                 # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
     sw a0, 40($fp)
 
@@ -139,23 +140,8 @@ mips32_plot:
     addu s8, s8, 4
 
 
-	move a0, t3     # a0 <- fd
+    move s0, t3
 
-    la a1, buffer 	# a1 <- buffer
-
-    move a2, s8     # a2 <- len(text)
-
-    li v0, SYS_write
-    syscall
-
-    move a0, t3     # a0 <- fd
-
-    la a1, buffer 	# a1 <- buffer
-
-    move a2, s8     # a2 <- len(text)
-
-    li v0, SYS_write
-    syscall
 
     # itoa(x_res)
 
@@ -165,20 +151,22 @@ mips32_plot:
 
     la t9, itoa
 
-    jal ra, t9 		# call itoa(a0)
+    #jal ra, t9 		# call itoa(a0)
 
-    j return
+    
 
 	addu s8, s8, v0	# sumo los bytes que me devuelve itoa(a0) a s8    
 
-    move a0, t3     # a0 <- fd
+    move a0, s0     # a0 <- fd
 
     la a1, buffer 	# a1 <- buffer
 
-    move a2, s8     # a2 <- len(text)
+    li a2, 4     # a2 <- len(text)
 
     li v0, SYS_write
     syscall
+
+    j return
 
     move s8, $0     		# Pongo el tamaño del buffer nuevamente en cero
 
@@ -268,7 +256,8 @@ empty_buffer:
 
 return:
     lw a0, 40(sp)
-    lw s8, 16(sp) 
+    lw s8, 16(sp)
+    lw s0, 20(sp)
     lw gp, 24(sp)
     lw	$fp, 28(sp)
 	lw	ra, 32(sp)
