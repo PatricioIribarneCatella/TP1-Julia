@@ -39,15 +39,18 @@ mips32_plot(param_t *parms)
 	 */
 
 	for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
+
 		for (x = 0, cr = parms->UL_re; x < parms->x_res; ++x, cr += parms->d_re) {
+
 			zr = cr;
 			zi = ci;
 
 			/*
 			 * Determinamos el nivel de brillo asociado al punto
 			 * (cr, ci), usando la formula compleja recurrente
-			 * f = f^3 + c.
+			 * f = f^2 + c.
 			 */
+
 			for (c = 0; c < parms->shades; ++c) {
 				if ((absz = zr*zr + zi*zi) > 4.0f)
 					break;
@@ -69,5 +72,6 @@ mips32_plot(param_t *parms)
 		fprintf(stderr, "cannot flush output file.\n");
 		return -1;
 	}
+	
 	return 0;
 }
