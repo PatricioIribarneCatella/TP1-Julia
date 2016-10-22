@@ -192,6 +192,14 @@ mips32_plot:
 
     addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
 
+    # Se agrega un enter ("\n") que es el ascii 10
+
+    li t4, 10
+
+    sb t4, buffer(s7)
+
+    addu s7, s7, 1
+
     # write(fd, text, len(text))
 
     move a0, t3     # a0 <- fd
