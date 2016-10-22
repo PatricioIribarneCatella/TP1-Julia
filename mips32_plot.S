@@ -90,7 +90,8 @@ mips32_plot:
     # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
     
-    # s7 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
+    # s7 se va a usar para poner el espacio usado en el buffer.
+    # s0 se va a usar para guardar el fd
     sw s7, 16($fp)
     sw s0, 20($fp)
     
@@ -202,7 +203,9 @@ mips32_plot:
 
     # write(fd, text, len(text))
 
-    move a0, t3     # a0 <- fd
+    move s0, t3     # Guardo fd en s0
+
+    move a0, s0     # a0 <- fd
 
     la a1, buffer 	# a1 <- buffer
   
@@ -288,7 +291,7 @@ assign_brightness:
     j loop_re
 
 empty_buffer:
-    move a0, t3      # a0 <- fd
+    move a0, s0      # a0 <- fd
     la a1, buffer    # a1 <- buffer
     move a2, s7      # a2 <- len(text)
 
@@ -395,7 +398,6 @@ return_bytes:
 	j return_f
 
 return_f:
-
 	lw a0, 8(sp)
 	lw a1, 12(sp) 
     lw gp, 0(sp)
