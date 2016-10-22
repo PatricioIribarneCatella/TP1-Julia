@@ -6,7 +6,7 @@
 #endif
 
 #ifndef BUF_SZ_AUX
-#define BUF_SZ_AUX 10
+#define BUF_SZ_AUX 4
 #endif
 
 #define UL_re 0
@@ -62,7 +62,7 @@ mips32_plot:
         Estado del frame:
             General Register Save Area (SRA)- Usada - 16 bytes - SP, GP, RA - Se le suman 4 bytes más para que sea multimplo de 8
             Float Regs Area (FRA) - No usada - 0 bytes - No guardamos variables flotantes locales
-            Local and Temporary Area (LTA) - Usada  - 8 bytes - s8 contiene el tamanio del buffer - más 4 bytes para que sea multimplo de 8
+            Local and Temporary Area (LTA) - Usada  - 8 bytes - s7 contiene el tamanio del buffer - más 4 bytes para que sea multimplo de 8
             Arg Building Area (ABA) - No usada - 16 bytes - porque se llama a itoa
     */
 
@@ -83,17 +83,19 @@ mips32_plot:
 	.cprestore 24		# inserta aqui "sw gp, 24(sp)",
 						# mas "lw gp, 24(sp)" luego de cada jal.
 
-                # El ra y fp van en las posiciones más altas del stack frame
+    # El ra y fp van en las posiciones más altas del stack frame
     sw	$fp, 28(sp)
 	sw	ra, 32(sp)
-                # A partir de ahora se usa directamente el fp como sp
+    
+    # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
-                # s8 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
-    sw s8, 16($fp)
+    
+    # s7 lo voy a usar para poner el espacio usado en mi buffer, asi que lo guardo para restaurarlo al final
+    sw s7, 16($fp)
     sw s0, 20($fp)
-                # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
+    
+    # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
     sw a0, 40($fp)
-
 
     /*
         $f4..$f10 temporary registers.
@@ -108,13 +110,13 @@ mips32_plot:
             t0 a t6 permanente (creo, hay que revisar) ocupados.
             t8 permanente ocupado. Aca guardo el brillo del ultimo punto calculado
             t9 temporalmente ocupado. se usa en assign_brightness. Disponible para otros usos por fuera
-            s8 permanentemente ocupado. Tamanio buffer
+            s7 permanentemente ocupado. Tamanio buffer
     */
 
-                # El buffer empieza con 0 bytes ocupados
-    move s8, $0
-                # Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
-
+    # El buffer empieza con 0 bytes ocupados
+    move s7, $0
+    
+    # Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
     l.s $f4, UL_re(a0)
     l.s $f5, UL_im(a0)
     l.s $f6, d_re(a0)
@@ -128,47 +130,87 @@ mips32_plot:
     lw t3, fd(a0)
 
     # Sys call-write para generar el header de la imagen con resolucion y max de intensidad
-                # text = "P2 x_res y_res shades"
-                # write(fd, text, len(text))
+    # text = "P2 x_res y_res shades"
 
-    la t4, header 	# P2
+    # "P2  "
+    la t4, header
 
     lw t4, 0(t4)    
 
-    sw t4, buffer(s8)
+    sw t4, buffer(s7)
 
-    addu s8, s8, 4
-
-
-    move s0, t3
-
+    addu s7, s7, 4
 
     # itoa(x_res)
 
-    move a0, t1 	# a0 <- t0
+    move a0, t0 	# a0 <- t0
 
-    move a1, s8 	# a1 <- s8 (el offset a partir del cual tiene que escribir en el buffer)
+    move a1, s7 	# a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
 
     la t9, itoa
 
-    jal ra, t9 		# call itoa(a0)
+    jal ra, t9 		# call itoa
 
-    
+	addu s7, s7, v0	# sumo los bytes que me devuelve itoa a s7
 
-	addu s8, s8, v0	# sumo los bytes que me devuelve itoa(a0) a s8    
+    # Se agrega un espacio (" ")
 
-    move a0, s0     # a0 <- fd
+    la t4, sep
+
+    lb t4, 0(t4)
+
+    sb t4, buffer(s7)
+
+    addu s7, s7, 1
+
+    # itoa(y_res)
+
+    move a0, t1     # a0 <- t1
+
+    move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+
+    la t9, itoa
+
+    jal ra, t9      # call itoa
+
+    addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
+
+    # Se agrega un espacio (" ")
+
+    la t4, sep
+
+    lb t4, 0(t4)
+
+    sb t4, buffer(s7)
+
+    addu s7, s7, 1
+
+    # itoa(shades)
+
+    move a0, t2     # a0 <- t2
+
+    move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+
+    la t9, itoa
+
+    jal ra, t9      # call itoa
+
+    addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
+
+    # write(fd, text, len(text))
+
+    move a0, t3     # a0 <- fd
 
     la a1, buffer 	# a1 <- buffer
-
-    move a2,s8     # a2 <- len(text)
+  
+    move a2, s7     # a2 <- len(text)
 
     li v0, SYS_write
     syscall
 
     j return
 
-    move s8, $0     		# Pongo el tamaño del buffer nuevamente en cero
+    move s7, $0     		# Pongo el tamaño del buffer nuevamente en cero
 
     sub.s $f4, $f4, $f6     # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
 
@@ -240,7 +282,7 @@ assign_brightness:
     sb t4, buffer(s8)               # Guardo el espacio en el buffer
     addiu s8, s8, 1                 # Se actualiza la cantidad de bytes ocupados
 
-    beq s8, BUF_SZ, empty_buffer   # Si llene el buffer
+    beq s8, BUF_SZ, empty_buffer    # Si se llenó el buffer
     j loop_re
 
 empty_buffer:
@@ -256,7 +298,7 @@ empty_buffer:
 
 return:
     lw a0, 40(sp)
-    lw s8, 16(sp)
+    lw s7, 16(sp)
     lw s0, 20(sp)
     lw gp, 24(sp)
     lw	$fp, 28(sp)
@@ -277,7 +319,6 @@ return:
 	.ent itoa
 itoa:
 
-    
 	/*
         Preparacion del stack frame.
         Estado del frame:
@@ -299,12 +340,14 @@ itoa:
 	                	# creo stack frame
     subu sp, sp, 8  	# 2 (SRA) + 0 (LTA) + 0 (ABA)
 
-                # El gp y FP van en las posiciones mas altas del stack frame
+    # El gp y FP van en las posiciones mas altas del stack frame
     sw gp, 0(sp)
     sw $fp, 4(sp)
-                # A partir de ahora se usa directamente el fp como sp
+    
+    # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
-                # Se hace un back-up del número entero y del offset recibidos como parámetros
+    
+    # Se hace un back-up del número entero y del offset recibidos como parámetros
     sw a0, 8($fp)
     sw a1, 12($fp)
 
@@ -312,7 +355,7 @@ itoa:
 
     beq a0, zero, return_0	# Si el numero es igual a cero
 
-    li t5, 9 				# Es el size de bufferAux y el indice del primer caracter del número
+    li t5, 3 				# (bufferAux-1) es el indice del primer caracter del número
 
 for_itoa:
 	beq a0, zero, for_write 	# Condición de corte (val == 0)
@@ -326,17 +369,17 @@ for_itoa:
 	j for_itoa
 
 for_write:
-	addiu t5, t5, 1 				# Sumo 1 porque en la ultima iteracion se le resto 1
-	move t7, zero 					# Inicializo t7 en cero para contar la cantidad de bytes escritos
+	addu t5, t5, 1 				# Sumo 1 porque en la ultima iteracion se le resto 1
+	move t7, $0 				# Inicializo t7 en cero para contar la cantidad de bytes escritos
 
 write:
 	beq t5, BUF_SZ_AUX, return_bytes 	# Condicion de corte (i == BUF_SZ_AUX)
 	lb t6, bufferAux(t5)				# t6 <- bufferAux[t5]
 	sb t6, buffer(a1) 					# buffer[offset] <- t6
 
-	addiu a1, a1, 1 				# offset++
-	addiu t5, t5, 1 				# i++
-	addiu t7, t7, 1 				# contBytes++
+	addu a1, a1, 1 				# offset++
+	addu t5, t5, 1 				# i++
+	addu t7, t7, 1 				# contBytes++
 
 	j write
 
@@ -354,10 +397,9 @@ return_f:
 	lw a0, 8(sp)
 	lw a1, 12(sp) 
     lw gp, 0(sp)
-    addu $fp, $fp, 8 
-    #lw  $fp, 4(sp) El load deberia funcionar, pero no. Un addu con 8 lo devuevle al original de todas formas.
-    addu sp, sp, 8  # destruyo stack frame
-    jr ra           # vuelvo a funcion llamadora
+    lw  $fp, 4(sp)
+    addu sp, sp, 8      # destruyo stack frame
+    jr ra               # vuelvo a funcion llamadora
 
 	.end itoa
 	.size itoa,.-itoa
@@ -369,4 +411,5 @@ buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
 bufferAux: .space BUF_SZ_AUX
 	.align 2
 header: .asciiz "P2  "
+    .align 2
 sep: .asciiz " "
