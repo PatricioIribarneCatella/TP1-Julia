@@ -133,9 +133,8 @@ mips32_plot:
     # text = "P2 x_res y_res shades"
 
     # "P2  "
-    la t4, header
 
-    lw t4, 0(t4)    
+    lw t4, header($0)    
 
     sw t4, buffer(s7)
 
@@ -155,9 +154,7 @@ mips32_plot:
 
     # Se agrega un espacio (" ")
 
-    la t4, sep
-
-    lb t4, 0(t4)
+    lb t4, sep($0)
 
     sb t4, buffer(s7)
 
@@ -177,9 +174,7 @@ mips32_plot:
 
     # Se agrega un espacio (" ")
 
-    la t4, sep
-
-    lb t4, 0(t4)
+    lb t4, sep($0)
 
     sb t4, buffer(s7)
 
@@ -274,26 +269,25 @@ loop_brightness:
     j loop_brightness
 
 assign_brightness:
-    sw t6, buffer(s8)               # Guardo el brillo en la posicion del buffer + bytes ocupados del buffer
-    addu s8, s8, 4                  # Se actualiza la cantidad de bytes ocupados
+    sw t6, buffer(s7)               # Guardo el brillo en la posicion del buffer + bytes ocupados del buffer
+    addu s7, s7, 4                  # Se actualiza la cantidad de bytes ocupados
 
-    la t4, sep                      
-    lb t4, 0(t4)					# t4 <- " "
-    sb t4, buffer(s8)               # Guardo el espacio en el buffer
-    addiu s8, s8, 1                 # Se actualiza la cantidad de bytes ocupados
+    lb t4, sep($0)					# t4 <- " "
+    sb t4, buffer(s7)               # Guardo el espacio en el buffer
+    addu s7, s7, 1                  # Se actualiza la cantidad de bytes ocupados
 
-    beq s8, BUF_SZ, empty_buffer    # Si se llenó el buffer
+    beq s7, BUF_SZ, empty_buffer    # Si se llenó el buffer
     j loop_re
 
 empty_buffer:
     move a0, t3      # a0 <- fd
     la a1, buffer    # a1 <- buffer
-    move a2, s8      # a2 <- len(text)
+    move a2, s7      # a2 <- len(text)
 
     li v0, SYS_write
     syscall
 
-    move s8, $0     # La cantidad de bytes ocupados es 0
+    move s7, $0     # La cantidad de bytes ocupados es 0
     j loop_re
 
 return:
