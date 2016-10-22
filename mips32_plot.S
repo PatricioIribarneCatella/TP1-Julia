@@ -151,7 +151,7 @@ mips32_plot:
 
     la t9, itoa
 
-    #jal ra, t9 		# call itoa(a0)
+    jal ra, t9 		# call itoa(a0)
 
     
 
@@ -161,7 +161,7 @@ mips32_plot:
 
     la a1, buffer 	# a1 <- buffer
 
-    li a2, 4     # a2 <- len(text)
+    move a2,s8     # a2 <- len(text)
 
     li v0, SYS_write
     syscall
@@ -277,6 +277,7 @@ return:
 	.ent itoa
 itoa:
 
+    
 	/*
         Preparacion del stack frame.
         Estado del frame:
@@ -290,6 +291,10 @@ itoa:
     .frame  $fp, 8, ra 	# $fp: registro usado como frame pointer
                         # 8: tamaño del stack frame
                         # ra: registro que almacena el return address
+
+    .set    noreorder   # apaga reordenamiento de instrucciones
+    .cpload t9          # directiva usada para codigo PIC
+    .set    reorder     # enciende reordenamiento de instrucciones
 
 	                	# creo stack frame
     subu sp, sp, 8  	# 2 (SRA) + 0 (LTA) + 0 (ABA)
@@ -345,10 +350,12 @@ return_bytes:
 	j return_f
 
 return_f:
-	sw a0, 8(sp)
-	sw a1, 12(sp) 
-    sw gp, 0(sp)
-    sw	$fp, 4(sp)
+
+	lw a0, 8(sp)
+	lw a1, 12(sp) 
+    lw gp, 0(sp)
+    addu $fp, $fp, 8 
+    #lw  $fp, 4(sp) El load deberia funcionar, pero no. Un addu con 8 lo devuevle al original de todas formas.
     addu sp, sp, 8  # destruyo stack frame
     jr ra           # vuelvo a funcion llamadora
 
