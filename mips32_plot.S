@@ -102,27 +102,10 @@ mips32_plot:
     # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
     sw a0, 72($fp)
 
-    /*
-        $f4..$f10 temporary registers.
-        $f16..$f18 temporary registers.
-
-        Guia de Registros usados:
-            Un registro permanente ocupado no puede ser utilizado en otros lados.
-            Un registro temporalmente ocupado puede ser usado para operaciones intermedias en varios lados.
-            Si no es mencionado no tiene ningun uso
-
-            f4 a f9 permanentemente ocupados. 
-            t0 a t6 permanente (creo, hay que revisar) ocupados.
-            t8 permanente ocupado. Aca guardo el brillo del ultimo punto calculado.
-            t9 temporalmente ocupado. se usa en assign_brightness. Disponible para otros usos por fuera.
-            s0 permanentemente ocupado. File descriptor.
-            s7 permanentemente ocupado. Tamanio buffer.
-    */
-
     # El buffer empieza con 0 bytes ocupados
     move s7, $0
     
-    # Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats del registro que llega inicialmente
+    # Usaremos de f4, f5, f6 ... f9 para cargar los datos que son floats de la estructura
     l.s $f4, UL_re(a0)
     l.s $f5, UL_im(a0)
     l.s $f6, d_re(a0)
@@ -221,8 +204,6 @@ mips32_plot:
 
     move s7, $0     # Tamaño del buffer nuevamente en cero
 
-    j return
-
     # Comienzo de la simulación del conjunto
 
     li s5, 0                        # y = 0
@@ -280,7 +261,7 @@ assign_brightness:
     sw v1, 20($fp)
 
     li t1, BUF_SZ
-    bgt t1, t0, empty_buffer        # Si la cantidad de bytes supera el tamaño del buffer
+    bgt t0, t1, empty_buffer        # Si la cantidad de bytes supera el tamaño del buffer
 
 label1:
     lw a0, 16($fp)                  # a0 <- Comienzo del primer caracter en el bufferAux (direccion de memoria)
@@ -341,8 +322,8 @@ return:
     lw gp, 56(sp)
     lw $fp, 60(sp)
 	lw ra, 64(sp)
-    addu sp, sp, 72  # destruyo stack frame
-    jr ra            # vuelvo a funcion llamadora
+    addu sp, sp, 72  # Se destruye stack frame
+    jr ra
 
 	.end mips32_plot
 	.size mips32_plot,.-mips32_plot
@@ -391,14 +372,14 @@ itoa:
 
     li t4, 48 				# Es el número ascii del 0
 
-    beq a0, zero, return_0	# Si el numero es igual a cero
+    beq a0, zero, return_0	# Si el número es igual a cero
 
-    li t5, 3 				# (bufferAux-1) es el indice del primer caracter del número
+    li t5, 3 				# (bufferAux-1) es el índice del primer caracter del número
 
 for_itoa:
 	beq a0, zero, end_for 	# Condición de corte (val == 0)
 	remu t6, a0, 10 		# t6 <- val % 10
-	addu t6, t6, t4 		# t6 <- t6 + 48 (calculo en base al ascii del cero qué número ascii corresponde)
+	addu t6, t6, t4 		# t6 <- t6 + 48 (Se calcula en base al ascii del cero qué número ascii corresponde)
 	sb t6, bufferAux(t5)
 
 	subu t5, t5, 1
@@ -422,8 +403,8 @@ return_f:
 	lw a0, 8(sp)
     lw gp, 0(sp)
     lw  $fp, 4(sp)
-    addu sp, sp, 8          # destruyo stack frame
-    jr ra                   # vuelvo a funcion llamadora
+    addu sp, sp, 8          # Se destruye stack frame
+    jr ra
 
 	.end itoa
 	.size itoa,.-itoa
@@ -472,7 +453,7 @@ writeBuffer:
     move t0, $0
 
 write:
-    beq t0, a1, return_w    # Condicion de corte (i == BUF_SZ_AUX)
+    beq t0, a1, return_w    # Condición de corte (i == BUF_SZ_AUX)
     addu t1, a0, t0
     lb t6, 0(t1)            # t6 <- bufferAux[t1]
     sb t6, buffer(a2)       # buffer[offset] <- t6
@@ -487,8 +468,8 @@ return_w:
     lw a1, 12(sp) 
     lw gp, 0(sp)
     lw  $fp, 4(sp)
-    addu sp, sp, 8      # destruyo stack frame
-    jr ra               # vuelvo a funcion llamadora
+    addu sp, sp, 8          # Se destruye stack frame
+    jr ra
 
     .end writeBuffer
     .size writeBuffer,.-writeBuffer
