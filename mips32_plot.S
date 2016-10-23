@@ -152,7 +152,7 @@ mips32_plot:
     move a1, s7 	# a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
     jal ra, t9 		# call itoa
-	addu s7, s7, v0	# sumo los bytes que me devuelve itoa a s7
+	addu s7, s7, v0	# Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
@@ -166,7 +166,7 @@ mips32_plot:
     move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
     jal ra, t9      # call itoa
-    addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
+    addu s7, s7, v0 # Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
@@ -180,7 +180,7 @@ mips32_plot:
     move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
     jal ra, t9      # call itoa
-    addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
+    addu s7, s7, v0 # Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un enter ("\n") que es el ascii 10
 
@@ -197,85 +197,93 @@ mips32_plot:
     li v0, SYS_write
     syscall
 
-    move s7, $0     		# Pongo el tamaño del buffer nuevamente en cero
+    move s7, $0     # Tamaño del buffer nuevamente en cero
 
-    sub.s $f4, $f4, $f6     # Porque en loop_re se suma antes de entrar a la subrutina, por comodidad
+    # Comienzo de la simulación del conjunto
 
-    li t4, 0                # y = 0
+    li t0, 0                        # y = 0
+    mov.s $f1, $f5                  # ci = UL_im
 
-loop_im:                    # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
-    bge t4, s1, return      # brach on y > y_res
-    addiu t4, t4, 1         # ++y
-    sub.s $f5, $f5, $f17    # UL_im - dy
-    li t5, 0                # x = 0 para cada llamada a loop_re
-    j loop_re
+loop_im:
+    beq t0, s1, return              # brach on y == y_res
+    li t1, 0                        # x = 0
+    mov.s $f2, $f4                  # cr = UL_re
 
 loop_re:
-    bge t5, s0, loop_im     # branch on x > x_res
-    addiu t5, t5, 1         # ++x
-    add.s $f4, $f4, $f6     # UL_re + dx
-    li t6, 0                # c = 0 para cada llamada a loop_brightness
-    j loop_brightness
+    beq t1, s0, end_loop_im         # branch on x == x_res
+    li t2, 0                        # c = 0
+    mov.s $f10, $f2                 # zr = cr
+    mov.s $f11, $f1                 # zi = ci
 
 loop_brightness:
-                # El valor del brillo se guarda en t6
-    bge a2, t6, assign_brightness
-                # Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
-    mov.s $f16, $f4
-    mul.s $f16, $f16, $f16    # f16 <- zr^2
-    mov.s $f17, $f5
-    mul.s $f17, $f17, $f17    # f17 <- zi^2
+    beq t2, s2, assign_brightness   # c == shades
 
-    add.s $f18, $f16, $f17    # f18 <- zr^2 + zi^2
+    mul.s $f16, $f10, $f10          # f16 <- zr * zr
+    mul.s $f17, $f11, $f11          # f17 <- zi * zi
+
+    add.s $f18, $f16, $f17          # f18 <- zr * zr + zi * zi
 
     /* Proximas 3 lineas son:
         if ((absz = zr*zr + zi*zi) > 4.0f)
             break;
     */
 
-    li.s $f10, 4.0
-    c.lt.s $f10, $f18           # 4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
-    bc1t assign_brightness      # salta cuando ese codigo esta en true (1)
+    li.s $f3, 4.0
+    c.lt.s $f3, $f18                # 4 < f18 entonces pone un true(1) en un registro especial (f18 > 4)
+    bc1t assign_brightness          # salta cuando ese codigo esta en true (1)
 
-    /* Proximas 10 lineas son:
-        sr = zr * zr - zi * zi + cpr;
-        si = 2 * zr * zi + cpi;
-        zr = sr;
-        zi = si;
-    */
+    sub.s $f16, $f16, $f17          # zr * zr - zi * zi
+    add.s $f16, $f16, $f8           # f16 <- zr * zr - zi * zi + cpr
 
-    mul.s $f16, $f4, $f4    # zr * zr
-    mul.s $f17, $f5, $f5    # zi * zi
-    sub.s $f16, $f16, $f17  # zr * zr - zi * zi
-    add.s $f16, $f16, $f8   # f16 <- zr * zr - zi * zi + cpr
+    mul.s $f17, $f10, $f11          # zr * zi
+    li.s $f3, 2.0
+    mul.s $f17, $f17, $f3           # 2 * zr * zi
+    add.s $f17, $f17, $f9           # f17 <- 2 * zr * zi + cpi
 
-    mul.s $f17, $f4, $f5    # zr * zi
-    li.s $f10, 2.0
-    mul.s $f17, $f17, $f10  # 2 * zr * zi
-    add.s $f17, $f17, $f9   # f17 <- 2 * zr * zi + cpi
+    mov.s $f10, $f16                # f4 <- zr * zr - zi * zi + cpr
+    mov.s $f11, $f17                # f5 <- 2 * zr * zi + cpi
 
-    mov.s $f4, $f16     	# f4 <- zr * zr - zi * zi + cpr
-    mov.s $f5, $f17     	# f5 <- 2 * zr * zi + cpi
-
-    addiu t6, t6, 1         # ++c
+    addu t2, t2, 1                  # ++c
     j loop_brightness
 
 assign_brightness:
     # itoa(c)
-    move a0, t6         # a0 <- s0
-    move a1, s7         # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+    move a0, t2                     # a0 <- s0
+    move a1, s7                     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
-    jal ra, t9          # call itoa
-    addu s7, s7, v0     # sumo los bytes que me devuelve itoa a s7
+    jal ra, t9                      # call itoa
+    addu s7, s7, v0                 # Se suman los bytes que devuelve itoa a s7
 
     li t4, 10					    # t4 <- "\n" ascci 10
     sb t4, buffer(s7)               # Se guarda el enter en el buffer
     addu s7, s7, 1                  # Se actualiza la cantidad de bytes ocupados
 
     beq s7, BUF_SZ, empty_buffer    # Si se llenó el buffer
+    j end_loop_re
+
+end_loop_re:
+    addu t1, t1, 1          # x++
+    add.s $f2, $f2, $f6     # cr += d_re
     j loop_re
 
+end_loop_im:
+    addu t0, t0, 1          # y++
+    sub.s $f1, $f1, $f7     # ci -= d_im
+    j loop_im
+
 empty_buffer:
+    move a0, s3             # a0 <- fd
+    la a1, buffer           # a1 <- buffer
+    move a2, s7             # a2 <- len(text)
+
+    li v0, SYS_write
+    syscall
+
+    move s7, $0             # La cantidad de bytes ocupados es 0
+    j end_loop_re
+
+return:
+    # Se escribe lo que haya quedado en el buffer
     move a0, s3      # a0 <- fd
     la a1, buffer    # a1 <- buffer
     move a2, s7      # a2 <- len(text)
@@ -283,10 +291,6 @@ empty_buffer:
     li v0, SYS_write
     syscall
 
-    move s7, $0     # La cantidad de bytes ocupados es 0
-    j loop_re
-
-return:
     lw s0, 16(sp)
     lw s1, 20(sp)
     lw s2, 24(sp)
