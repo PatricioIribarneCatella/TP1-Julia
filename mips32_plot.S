@@ -60,15 +60,15 @@ mips32_plot:
     /*
         Preparacion del stack frame.
         Estado del frame:
-            General Register Save Area (SRA)- Usada - 32 bytes - SP, GP, RA, s0, s1, s2, s3, s7
+            General Register Save Area (SRA)- Usada - 48 bytes - SP, GP, RA, s0, s1, s2, s3, s4, s5, s6, s7
             Float Regs Area (FRA) - No usada - 0 bytes - No guardamos variables flotantes locales
-            Local and Temporary Area (LTA) - No usada
+            Local and Temporary Area (LTA) - Usada - 8 bytes - Resultados de la función itoa
             Arg Building Area (ABA) - No usada - 16 bytes - porque se llama a itoa
     */
 
                         # debugging info: descripcion del stack frame
-    .frame  $fp, 48, ra # $fp: registro usado como frame pointer
-                        # 48: tamaño del stack frame
+    .frame  $fp, 72, ra # $fp: registro usado como frame pointer
+                        # 72: tamaño del stack frame
                         # ra: registro que almacena el return address
 
                         # bloque para codigo PIC
@@ -77,32 +77,30 @@ mips32_plot:
 	.set	reorder		# enciende reordenamiento de instrucciones
 
                     	# creo stack frame
-    subu sp, sp, 48 	# 8 (SRA) + 0 (LTA) + 4 (ABA)
+    subu sp, sp, 72 	# 12 (SRA) + 2 (LTA) + 4 (ABA)
 
     					# directiva para codigo PIC
-	.cprestore 36		# inserta aqui "sw gp, 36(sp)",
-						# mas "lw gp, 36(sp)" luego de cada jal.
+	.cprestore 56		# inserta aqui "sw gp, 56(sp)",
+						# mas "lw gp, 56(sp)" luego de cada jal.
 
     # El ra y fp van en las posiciones más altas del stack frame
-    sw	$fp, 40(sp)
-	sw	ra, 44(sp)
+    sw	$fp, 60(sp)
+	sw	ra, 64(sp)
     
     # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
     
-    # s0 -> x_res
-    # s1 -> y_res
-    # s2 -> shades
-    # s3 -> fd
-    # s7 se va a usar para poner el espacio usado en el buffer.
-    sw s0, 16($fp)
-    sw s1, 20($fp)
-    sw s2, 24($fp)
-    sw s3, 28($fp)
-    sw s7, 32($fp)
+    sw s0, 24($fp)  # x_res
+    sw s1, 28($fp)  # y_res
+    sw s2, 32($fp)  # shades
+    sw s3, 36($fp)  # fd
+    sw s4, 40($fp)  # x (contador)
+    sw s5, 44($fp)  # y (contador)
+    sw s6, 48($fp)  # c (contador)
+    sw s7, 52($fp)  # Se va a usar para poner el espacio usado en el buffer.
     
     # Se hace un back-up de la estructura recibida por parámetro en la ABA de la funcion llamante
-    sw a0, 48($fp)
+    sw a0, 72($fp)
 
     /*
         $f4..$f10 temporary registers.
@@ -149,10 +147,18 @@ mips32_plot:
     # itoa(x_res)
 
     move a0, s0 	# a0 <- s0
-    move a1, s7 	# a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
     jal ra, t9 		# call itoa
-	addu s7, s7, v0	# Se suman los bytes que devuelve itoa a s7
+
+    # writeBuffer("x_res", len("x_res"))
+
+    move a0, v0     # a0 <- dirección de memoria del primer caracter
+    move a1, v1     # a1 <- cantidad de bytes a escribir
+    move a2, s7     # a2 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+    la t9, writeBuffer
+    jal ra, t9
+
+	addu s7, s7, a1	# Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
@@ -163,10 +169,18 @@ mips32_plot:
     # itoa(y_res)
 
     move a0, s1     # a0 <- s1
-    move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
     jal ra, t9      # call itoa
-    addu s7, s7, v0 # Se suman los bytes que devuelve itoa a s7
+
+    # writeBuffer("y_res", len("y_res"))
+
+    move a0, v0     # a0 <- dirección de memoria del primer caracter
+    move a1, v1     # a1 <- cantidad de bytes a escribir
+    move a2, s7     # a2 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+    la t9, writeBuffer
+    jal ra, t9
+
+    addu s7, s7, a1 # Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
@@ -177,10 +191,18 @@ mips32_plot:
     # itoa(shades)
 
     move a0, s2     # a0 <- s2
-    move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
     jal ra, t9      # call itoa
-    addu s7, s7, v0 # Se suman los bytes que devuelve itoa a s7
+
+    # writeBuffer("shades", len("shades"))
+
+    move a0, v0     # a0 <- dirección de memoria del primer caracter
+    move a1, v1     # a1 <- cantidad de bytes a escribir
+    move a2, s7     # a2 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+    la t9, writeBuffer
+    jal ra, t9
+
+    addu s7, s7, a1 # Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un enter ("\n") que es el ascii 10
 
@@ -199,24 +221,26 @@ mips32_plot:
 
     move s7, $0     # Tamaño del buffer nuevamente en cero
 
+    j return
+
     # Comienzo de la simulación del conjunto
 
-    li t0, 0                        # y = 0
+    li s5, 0                        # y = 0
     mov.s $f1, $f5                  # ci = UL_im
 
 loop_im:
-    beq t0, s1, return              # brach on y == y_res
-    li t1, 0                        # x = 0
+    beq s5, s1, return              # brach on y == y_res
+    li s4, 0                        # x = 0
     mov.s $f2, $f4                  # cr = UL_re
 
 loop_re:
-    beq t1, s0, end_loop_im         # branch on x == x_res
-    li t2, 0                        # c = 0
+    beq s4, s0, end_loop_im         # branch on x == x_res
+    li s6, 0                        # c = 0
     mov.s $f10, $f2                 # zr = cr
     mov.s $f11, $f1                 # zi = ci
 
 loop_brightness:
-    beq t2, s2, assign_brightness   # c == shades
+    beq s6, s2, assign_brightness   # c == shades
 
     mul.s $f16, $f10, $f10          # f16 <- zr * zr
     mul.s $f17, $f11, $f11          # f17 <- zi * zi
@@ -243,31 +267,43 @@ loop_brightness:
     mov.s $f10, $f16                # f4 <- zr * zr - zi * zi + cpr
     mov.s $f11, $f17                # f5 <- 2 * zr * zi + cpi
 
-    addu t2, t2, 1                  # ++c
+    addu s6, s6, 1                  # ++c
     j loop_brightness
 
 assign_brightness:
     # itoa(c)
-    move a0, t2                     # a0 <- s0
-    move a1, s7                     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
+    move a0, s6
     la t9, itoa
     jal ra, t9                      # call itoa
-    addu s7, s7, v0                 # Se suman los bytes que devuelve itoa a s7
+    addu t0, s7, v1                 # Suma auxiliar de la cantidad de bytes totales
+    sw v0, 16($fp)                  # Se guarda la dirección de memoria del resultado de itoa
+    sw v1, 20($fp)
+
+    li t1, BUF_SZ
+    bgt t1, t0, empty_buffer        # Si la cantidad de bytes supera el tamaño del buffer
+
+label1:
+    lw a0, 16($fp)                  # a0 <- Comienzo del primer caracter en el bufferAux (direccion de memoria)
+    lw a1, 20($fp)                  # a1 <- Cantidad de bytes a escribir
+    move a2, s7                     # a2 <- Offset a partir del cual tiene que escribir en el buffer
+    la t9, writeBuffer
+    jal ra, t9                      # call writeBuffer
+
+    addu s7, s7, a1                 # Se actualiza la cantidad de bytes en el buffer
 
     li t4, 10					    # t4 <- "\n" ascci 10
     sb t4, buffer(s7)               # Se guarda el enter en el buffer
     addu s7, s7, 1                  # Se actualiza la cantidad de bytes ocupados
 
-    beq s7, BUF_SZ, empty_buffer    # Si se llenó el buffer
     j end_loop_re
 
 end_loop_re:
-    addu t1, t1, 1          # x++
+    addu s4, s4, 1          # x++
     add.s $f2, $f2, $f6     # cr += d_re
     j loop_re
 
 end_loop_im:
-    addu t0, t0, 1          # y++
+    addu s5, s5, 1          # y++
     sub.s $f1, $f1, $f7     # ci -= d_im
     j loop_im
 
@@ -280,7 +316,7 @@ empty_buffer:
     syscall
 
     move s7, $0             # La cantidad de bytes ocupados es 0
-    j end_loop_re
+    j label1
 
 return:
     # Se escribe lo que haya quedado en el buffer
@@ -291,37 +327,41 @@ return:
     li v0, SYS_write
     syscall
 
-    lw s0, 16(sp)
-    lw s1, 20(sp)
-    lw s2, 24(sp)
-    lw s3, 28(sp)
-    lw s7, 32(sp)
+    lw s0, 24($fp)
+    lw s1, 28($fp)
+    lw s2, 32($fp)
+    lw s3, 36($fp)
+    lw s4, 40($fp)
+    lw s5, 44($fp)
+    lw s6, 48($fp)
+    lw s7, 52($fp)
 
-    lw a0, 48(sp)
+    lw a0, 72(sp)
 
-    lw gp, 36(sp)
-    lw $fp, 40(sp)
-	lw ra, 44(sp)
-    addu sp, sp, 48  # destruyo stack frame
+    lw gp, 56(sp)
+    lw $fp, 60(sp)
+	lw ra, 64(sp)
+    addu sp, sp, 72  # destruyo stack frame
     jr ra            # vuelvo a funcion llamadora
 
 	.end mips32_plot
 	.size mips32_plot,.-mips32_plot
 
 /*
-	int itoa(int offset, unsigned int val);
+	(char* buffer, int cantBytes) itoa(unsigned int val);
 
-	Devuelve la cantiddad de bytes ocupados para la representación en caracteres del entero (val)
-	Graba en el buffer la representación
+    Devuelve la dirección de memoria del primer caracter en el bufferAux -> v0
+	Devuelve la cantiddad de bytes ocupados para la representación en caracteres del entero (val) -> v1
 */
 
 	.ent itoa
+
 itoa:
 
 	/*
         Preparacion del stack frame.
         Estado del frame:
-            General Register Save Area (SRA)- Usada - 8 bytes - SP y GP. Al ser leaf no necesito guardar RA
+            General Register Save Area (SRA)- Usada - 8 bytes - SP y GP. Al ser leaf no se necesita guardar RA
             Float Regs Area (FRA) - No usada - 0 bytes - No guardamos variables flotantes locales
             Local and Temporary Area (LTA) - Usada  - 0 bytes 
             Arg Building Area (ABA) - No usada - 0 bytes - No se llama a ninguna otra funcion
@@ -346,9 +386,8 @@ itoa:
     # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
     
-    # Se hace un back-up del número entero y del offset recibidos como parámetros
+    # Se hace un back-up del número entero
     sw a0, 8($fp)
-    sw a1, 12($fp)
 
     li t4, 48 				# Es el número ascii del 0
 
@@ -357,54 +396,106 @@ itoa:
     li t5, 3 				# (bufferAux-1) es el indice del primer caracter del número
 
 for_itoa:
-	beq a0, zero, for_write 	# Condición de corte (val == 0)
-	remu t6, a0, 10 			# t6 <- val % 10
-	addu t6, t6, t4 			# t6 <- t6 + 48 (calculo en base al ascii del cero que número ascii corresponde)
+	beq a0, zero, end_for 	# Condición de corte (val == 0)
+	remu t6, a0, 10 		# t6 <- val % 10
+	addu t6, t6, t4 		# t6 <- t6 + 48 (calculo en base al ascii del cero qué número ascii corresponde)
 	sb t6, bufferAux(t5)
 
 	subu t5, t5, 1
-	divu a0, a0, 10 			# val <- val / 10
+	divu a0, a0, 10 		# val <- val / 10
 
 	j for_itoa
 
-for_write:
-	addu t5, t5, 1 				# Sumo 1 porque en la ultima iteracion se le resto 1
-	move t7, $0 				# Inicializo t7 en cero para contar la cantidad de bytes escritos
-
-write:
-	beq t5, BUF_SZ_AUX, return_bytes 	# Condicion de corte (i == BUF_SZ_AUX)
-	lb t6, bufferAux(t5)				# t6 <- bufferAux[t5]
-	sb t6, buffer(a1) 					# buffer[offset] <- t6
-
-	addu a1, a1, 1 				# offset++
-	addu t5, t5, 1 				# i++
-	addu t7, t7, 1 				# contBytes++
-
-	j write
+end_for:
+    addu t5, t5, 1 			# Se le suma 1 porque en la última iteración se le restó 1
+	la v0, bufferAux(t5)
+    li t0, BUF_SZ_AUX
+    subu v1, t0, t5
+    j return_f
 
 return_0:
-	sb t4, buffer(a1)
-	li v0, 1
-	j return_f
-
-return_bytes:
-	move v0, t7
-	j return_f
+	sb t4, bufferAux($0)
+	la v0, bufferAux
+    li v1, 1
 
 return_f:
 	lw a0, 8(sp)
-	lw a1, 12(sp) 
+    lw gp, 0(sp)
+    lw  $fp, 4(sp)
+    addu sp, sp, 8          # destruyo stack frame
+    jr ra                   # vuelvo a funcion llamadora
+
+	.end itoa
+	.size itoa,.-itoa
+
+/*
+    void writeBuffer(char* buffer, int cantBytes, int offset)
+*/
+
+    .ent writeBuffer
+
+writeBuffer:
+
+    /*
+        Preparacion del stack frame.
+        Estado del frame:
+            General Register Save Area (SRA)- Usada - 8 bytes - SP y GP. Al ser leaf no se necesita guardar RA
+            Float Regs Area (FRA) - No usada - 0 bytes - No guardamos variables flotantes locales
+            Local and Temporary Area (LTA) - Usada  - 0 bytes 
+            Arg Building Area (ABA) - No usada - 0 bytes - No se llama a ninguna otra funcion
+    */
+
+                        # debugging info: descripcion del stack frame
+    .frame  $fp, 8, ra  # $fp: registro usado como frame pointer
+                        # 8: tamaño del stack frame
+                        # ra: registro que almacena el return address
+
+    .set    noreorder   # apaga reordenamiento de instrucciones
+    .cpload t9          # directiva usada para codigo PIC
+    .set    reorder     # enciende reordenamiento de instrucciones
+
+                        # creo stack frame
+    subu sp, sp, 8      # 2 (SRA) + 0 (LTA) + 0 (ABA)
+
+    # El gp y FP van en las posiciones mas altas del stack frame
+    sw gp, 0(sp)
+    sw $fp, 4(sp)
+    
+    # A partir de ahora se usa directamente el fp como sp
+    move $fp,sp
+    
+    # Se hace un back-up del número entero y del offset recibidos como parámetros
+    sw a0, 8($fp)
+    sw a1, 12($fp)
+    sw a2, 16($fp)
+
+    move t0, $0
+
+write:
+    beq t0, a1, return_w    # Condicion de corte (i == BUF_SZ_AUX)
+    addu t1, a0, t0
+    lb t6, 0(t1)            # t6 <- bufferAux[t1]
+    sb t6, buffer(a2)       # buffer[offset] <- t6
+
+    addu a2, a2, 1          # offset++
+    addu t0, t0, 1          # i++
+
+    j write
+
+return_w:
+    lw a0, 8(sp)
+    lw a1, 12(sp) 
     lw gp, 0(sp)
     lw  $fp, 4(sp)
     addu sp, sp, 8      # destruyo stack frame
     jr ra               # vuelvo a funcion llamadora
 
-	.end itoa
-	.size itoa,.-itoa
+    .end writeBuffer
+    .size writeBuffer,.-writeBuffer
 
 	.data
 	.align 2 			# alineacion 2^2
-buffer: .space BUF_SZ   # reservo mucho para el buffer, esto esta mal
+buffer: .space BUF_SZ
 	.align 2
 bufferAux: .space BUF_SZ_AUX
 	.align 2
