@@ -143,83 +143,59 @@ mips32_plot:
     # ("P2  ")
 
     lw t4, header($0)    
-
     sw t4, buffer(s7)
-
     addu s7, s7, 4
 
     # itoa(x_res)
 
     move a0, s0 	# a0 <- s0
-
     move a1, s7 	# a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
-
     la t9, itoa
-
     jal ra, t9 		# call itoa
-
 	addu s7, s7, v0	# sumo los bytes que me devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
     lb t4, sep($0)
-
     sb t4, buffer(s7)
-
     addu s7, s7, 1
 
     # itoa(y_res)
 
     move a0, s1     # a0 <- s1
-
     move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
-
     la t9, itoa
-
     jal ra, t9      # call itoa
-
     addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
     lb t4, sep($0)
-
     sb t4, buffer(s7)
-
     addu s7, s7, 1
 
     # itoa(shades)
 
     move a0, s2     # a0 <- s2
-
     move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
-
     la t9, itoa
-
     jal ra, t9      # call itoa
-
     addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
 
     # Se agrega un enter ("\n") que es el ascii 10
 
     li t4, 10
-
     sb t4, buffer(s7)
-
     addu s7, s7, 1
 
     # write(fd, text, len(text))
 
     move a0, s3     # a0 <- fd
-
     la a1, buffer 	# a1 <- buffer
-  
     move a2, s7     # a2 <- len(text)
 
     li v0, SYS_write
     syscall
-
-    j return
 
     move s7, $0     		# Pongo el tamaño del buffer nuevamente en cero
 
@@ -228,14 +204,14 @@ mips32_plot:
     li t4, 0                # y = 0
 
 loop_im:                    # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
-    blt s1, t4, return      # brach on y > y_res
+    bge t4, s1, return      # brach on y > y_res
     addiu t4, t4, 1         # ++y
     sub.s $f5, $f5, $f17    # UL_im - dy
     li t5, 0                # x = 0 para cada llamada a loop_re
     j loop_re
 
 loop_re:
-    blt s0, t5, loop_im     # branch on x > x_res
+    bge t5, s0, loop_im     # branch on x > x_res
     addiu t5, t5, 1         # ++x
     add.s $f4, $f4, $f6     # UL_re + dx
     li t6, 0                # c = 0 para cada llamada a loop_brightness
@@ -243,8 +219,7 @@ loop_re:
 
 loop_brightness:
                 # El valor del brillo se guarda en t6
-    blt s2, t6, assign_brightness
-
+    bge a2, t6, assign_brightness
                 # Los registros temporales sin uso que quedan son 10,16,17,18. Usaremos 16 17 y 18 en este loop.
     mov.s $f16, $f4
     mul.s $f16, $f16, $f16    # f16 <- zr^2
@@ -287,15 +262,11 @@ loop_brightness:
 
 assign_brightness:
     # itoa(c)
-    move a0, t6     # a0 <- s0
-
-    move a1, s7     # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
-
+    move a0, t6         # a0 <- s0
+    move a1, s7         # a1 <- s7 (el offset a partir del cual tiene que escribir en el buffer)
     la t9, itoa
-
-    jal ra, t9      # call itoa
-
-    addu s7, s7, v0 # sumo los bytes que me devuelve itoa a s7
+    jal ra, t9          # call itoa
+    addu s7, s7, v0     # sumo los bytes que me devuelve itoa a s7
 
     li t4, 10					    # t4 <- "\n" ascci 10
     sb t4, buffer(s7)               # Se guarda el enter en el buffer
