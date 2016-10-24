@@ -202,6 +202,8 @@ mips32_plot:
     li v0, SYS_write
     syscall
 
+    bne a3, zero, return_error 	# Se verifica si hubo un error de escritura
+
     move s7, $0     # Tamaño del buffer nuevamente en cero
 
     # Comienzo de la simulación del conjunto
@@ -296,7 +298,9 @@ empty_buffer:
     li v0, SYS_write
     syscall
 
-    move s7, $0             # La cantidad de bytes ocupados es 0
+    bne a3, zero, return_error 	# Se verifica si hubo un error de escritura
+
+    move s7, $0             	# La cantidad de bytes ocupados es 0
     j label1
 
 return:
@@ -307,6 +311,8 @@ return:
 
     li v0, SYS_write
     syscall
+
+    bne a3, zero, return_error 	# Se verifica si hubo un error de escritura
 
     lw s0, 24($fp)
     lw s1, 28($fp)
@@ -323,6 +329,34 @@ return:
     lw $fp, 60(sp)
 	lw ra, 64(sp)
     addu sp, sp, 72  # Se destruye stack frame
+    move v0, $0
+    jr ra
+
+return_error:
+	# Se escribe el mensaje de error
+    li a0, 2      	 		# a0 <- 2 (stderr)
+    la a1, error_message    # a1 <- error_message
+    li a2, 11      			# a2 <- 11 bytes
+
+    li v0, SYS_write
+    syscall
+
+	lw s0, 24($fp)
+    lw s1, 28($fp)
+    lw s2, 32($fp)
+    lw s3, 36($fp)
+    lw s4, 40($fp)
+    lw s5, 44($fp)
+    lw s6, 48($fp)
+    lw s7, 52($fp)
+
+    lw a0, 72(sp)
+
+    lw gp, 56(sp)
+    lw $fp, 60(sp)
+	lw ra, 64(sp)
+    addu sp, sp, 72  # Se destruye stack frame
+    li v0, -1 		 # Devuelve un número negativo en caso de error
     jr ra
 
 	.end mips32_plot
@@ -483,3 +517,5 @@ bufferAux: .space BUF_SZ_AUX
 header: .asciiz "P2  "
     .align 2
 sep: .asciiz " "
+	.align 2
+error_message: .asciiz "i/o error\n"
