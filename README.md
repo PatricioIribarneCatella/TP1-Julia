@@ -15,4 +15,4 @@ $ ./tp1 -r ANCHOxALTO -c a+bi -C c+di -w AnchoRegionPlanoComplejo -H AltoRegionP
 
 ## Pruebas
 
-$ make pruebas
+$ bash pruebas.sh

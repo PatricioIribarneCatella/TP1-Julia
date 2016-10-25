@@ -5,7 +5,6 @@ OPTS	= 'CC=$(CC)'
 HDRS    = debug.h defs.h mygetopt.h param.h
 SRCS	= mips32_plot.S main.c mygetopt_long.c
 PROG	= tp1
-TESTSCRIPT = pruebas.sh
 
 $(PROG): $(SRCS) $(HDRS)
 	$(CC) $(CFLAGS) -o $@ $(SRCS)
@@ -30,5 +29,3 @@ clean:
 	      junk *core .nfs* .pure *.out *.out.* *.tmp *.a *~ *- *.orig \
 	      *.t *.o *.bak make.err *.gmon $(PROG)
 
-pruebas: $(PROG)
-	bash $(TESTSCRIPT)
