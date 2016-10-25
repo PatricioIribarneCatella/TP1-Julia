@@ -27,21 +27,21 @@
 # Prueba 9: Imagen default
 ./tp1 -o imagenDefault.pgm
 
-# Prueba 10: Imagen con parámetros [r: 1000x1000]
-./tp1 -r 1000x1000 -o imagen1000x1000.pgm
+# Prueba 10: Imagen con parámetros [r: 400x400, -c 1+1i]
+./tp1 -r 400x400 -c 1+1i -o imagen1+1i.pgm
 
-# Prueba 11: Imagen con parámetros [r: 1000x1000, C: -0.75+0.0i, w(ancho): 3, H(alto): 3]
-./tp1 -r 1000x1000 -C -0.75+0.0i -w 3.0 -H 3.0 -o imagen1.pgm
+# Prueba 11: Imagen con parámetros [r: 400x400, C: -0.75+0.0i, w(ancho): 3, H(alto): 3]
+./tp1 -r 400x400 -C -0.75+0.0i -w 3.0 -H 3.0 -o imagen1.pgm
 
-# Prueba 12: Imagen con parámetros [r: 1000x1000, C: -0.29799-0.65705i]
-./tp1 -r 1000x1000 -C -0.29799-0.65705i -o imagen2.pgm
+# Prueba 12: Imagen con parámetros [r: 400x400, C: -0.29799-0.65705i]
+./tp1 -r 400x400 -C -0.29799-0.65705i -o imagen2.pgm
 
-# Prueba 13: Imagen con parámetros [r: 1000x1000, C: -0.20722+0.64840i]
-./tp1 -r 1000x1000 -C -0.20722+0.64840i -o imagen3.pgm
+# Prueba 13: Imagen con parámetros [r: 400x400, C: -0.20722+0.64840i]
+./tp1 -r 400x400 -C -0.20722+0.64840i -o imagen3.pgm
 
-# Prueba 14: Imagen con parámetros [r: 1000x1000, C: -0.45793+0.52736i]
-./tp1 -r 1000x1000 -C -0.45793+0.52736i -o imagen4.pgm
+# Prueba 14: Imagen con parámetros [r: 400x400, C: -0.45793+0.52736i]
+./tp1 -r 400x400 -C -0.45793+0.52736i -o imagen4.pgm
 
-# Prueba 15: Imagen con parámetros [r: 1000x1000, C: -1.75473+0i]
-./tp1 -r 1000x1000 -C -1.75473+0i -o imagen5.pgm
+# Prueba 15: Imagen con parámetros [r: 400x400, C: -1.75473+0i]
+./tp1 -r 400x400 -C -1.75473+0i -o imagen5.pgm
 

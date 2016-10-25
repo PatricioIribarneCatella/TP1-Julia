@@ -479,7 +479,7 @@ writeBuffer:
     # A partir de ahora se usa directamente el fp como sp
     move $fp,sp
     
-    # Se hace un back-up del número entero y del offset recibidos como parámetros
+    # Se hace un back-up del char*, de la cantidad de bytes y del offset
     sw a0, 8($fp)
     sw a1, 12($fp)
     sw a2, 16($fp)
