@@ -301,7 +301,7 @@ do_height(const char *name, const char *spec)
 	           "%lf %c", 
 	           &height,
 	           &ch) != 1
-	    || height <= 0.0) {
+	    	|| height <= 0.0) {
 		fprintf(stderr, "invalid height specification.\n");
 		exit(1);
 	}
@@ -328,7 +328,7 @@ do_width(const char *name, const char *spec)
 	           "%lf %c", 
 	           &width,
 	           &ch) != 1
-	    || width <= 0.0) {
+		|| width <= 0.0) {
 		fprintf(stderr, "invalid width specification.\n");
 		exit(1);
 	}
@@ -371,14 +371,14 @@ plot(void)
 	parms.UL_im = upper_left_im;
 	parms.LR_re = lower_right_re;
 	parms.LR_im = lower_right_im;
-    parms.d_re = (lower_right_re - upper_left_re) / x_res;
-    parms.d_im = (upper_left_im - lower_right_im) / y_res;
-    parms.x_res = x_res;
-    parms.y_res = y_res;
-    parms.shades = 255;
+	parms.d_re = (lower_right_re - upper_left_re) / x_res;
+	parms.d_im = (upper_left_im - lower_right_im) / y_res;
+	parms.x_res = x_res;
+	parms.y_res = y_res;
+	parms.shades = 255;
 	parms.cp_re = c_param_re;
 	parms.cp_im = c_param_im;
-    parms.fd = fileno(output);
+	parms.fd = fileno(output);
 
 	if (mips32_plot(&parms) < 0) exit(1);
 }
