@@ -129,9 +129,9 @@ mips32_plot:
 
     # itoa(x_res)
 
-    move a0, s0 	# a0 <- s0
+    move a0, s0    # a0 <- s0
     la t9, itoa
-    jal ra, t9 		# call itoa
+    jal ra, t9 	   # call itoa
 
     # writeBuffer("x_res", len("x_res"))
 
@@ -141,7 +141,7 @@ mips32_plot:
     la t9, writeBuffer
     jal ra, t9
 
-    addu s7, s7, a1	# Se suman los bytes que devuelve itoa a s7
+    addu s7, s7, a1 # Se suman los bytes que devuelve itoa a s7
 
     # Se agrega un espacio (" ")
 
@@ -196,7 +196,7 @@ mips32_plot:
     # write(fd, text, len(text))
 
     move a0, s3     # a0 <- fd
-    la a1, buffer 	# a1 <- buffer
+    la a1, buffer   # a1 <- buffer
     move a2, s7     # a2 <- len(text)
 
     li v0, SYS_write
@@ -327,7 +327,7 @@ return:
 
     lw gp, 56(sp)
     lw $fp, 60(sp)
-	lw ra, 64(sp)
+    lw ra, 64(sp)
     addu sp, sp, 72  # Se destruye stack frame
     move v0, $0
     jr ra
@@ -509,7 +509,7 @@ return_w:
     .size writeBuffer,.-writeBuffer
 
     .data
-    .align 2 			# alineacion 2^2
+    .align 2 		    # alineacion 2^2
 buffer: .space BUF_SZ
     .align 2
 bufferAux: .space BUF_SZ_AUX
