@@ -263,7 +263,7 @@ assign_brightness:
     sw v1, 20($fp)
 
     li t1, BUF_SZ
-    bgt t0, t1, empty_buffer        # Si la cantidad de bytes supera el tamaño del buffer
+    bge t0, t1, empty_buffer        # Si la cantidad de bytes supera el tamaño del buffer
 
 label1:
     lw a0, 16($fp)                  # a0 <- Comienzo del primer caracter en el bufferAux (direccion de memoria)
