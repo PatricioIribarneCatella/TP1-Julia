@@ -298,9 +298,9 @@ empty_buffer:
 	li v0, SYS_write
 	syscall
 
-	bne a3, zero, return_error 	# Se verifica si hubo un error de escritura
+	bne a3, zero, return_error	# Se verifica si hubo un error de escritura
 
-	move s7, $0             	# La cantidad de bytes ocupados es 0
+	move s7, $0			# La cantidad de bytes ocupados es 0
 	j label1
 
 return:
@@ -412,8 +412,8 @@ itoa:
 
 for_itoa:
 	beq a0, zero, end_for 	# Condición de corte (val == 0)
-	remu t6, a0, 10 	# t6 <- val % 10
-	addu t6, t6, t4 	# t6 <- t6 + 48 (Se calcula en base al ascii del cero qué número ascii corresponde)
+	remu t6, a0, 10		# t6 <- val % 10
+	addu t6, t6, t4		# t6 <- t6 + 48 (Se calcula en base al ascii del cero qué número ascii corresponde)
 	sb t6, bufferAux(t5)
 
 	subu t5, t5, 1
