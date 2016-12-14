@@ -66,22 +66,22 @@ mips32_plot:
 			Arg Building Area (ABA) - No usada - 16 bytes - porque se llama a itoa
 	*/
 
-						# debugging info: descripcion del stack frame
-	.frame  $fp, 72, ra # $fp: registro usado como frame pointer
-						# 72: tamaño del stack frame
-						# ra: registro que almacena el return address
+				# debugging info: descripcion del stack frame
+	.frame  $fp, 72, ra 	# $fp: registro usado como frame pointer
+				# 72: tamaño del stack frame
+				# ra: registro que almacena el return address
 
-						# bloque para codigo PIC
+				# bloque para codigo PIC
 	.set noreorder		# apaga reordenamiento de instrucciones
-	.cpload t9			# directiva usada para codigo PIC
+	.cpload t9		# directiva usada para codigo PIC
 	.set reorder		# enciende reordenamiento de instrucciones
 
-						# creo stack frame
+				# creo stack frame
 	subu sp, sp, 72 	# 12 (SRA) + 2 (LTA) + 4 (ABA)
 
-						# directiva para codigo PIC
+				# directiva para codigo PIC
 	.cprestore 56		# inserta aqui "sw gp, 56(sp)",
-						# mas "lw gp, 56(sp)" luego de cada jal.
+				# mas "lw gp, 56(sp)" luego de cada jal.
 
 	# El ra y fp van en las posiciones más altas del stack frame
 	sw	$fp, 60(sp)
@@ -131,7 +131,7 @@ mips32_plot:
 
 	move a0, s0 	# a0 <- s0
 	la t9, itoa
-	jal ra, t9 		# call itoa
+	jal ra, t9 	# call itoa
 
 	# writeBuffer("x_res", len("x_res"))
 
@@ -334,9 +334,9 @@ return:
 
 return_error:
 	# Se escribe el mensaje de error
-	li a0, 2 				# a0 <- 2 (stderr)
+	li a0, 2 		# a0 <- 2 (stderr)
 	la a1, error_message    # a1 <- error_message
-	li a2, 11 				# a2 <- 11 bytes
+	li a2, 11 		# a2 <- 11 bytes
 
 	li v0, SYS_write
 	syscall
@@ -355,8 +355,8 @@ return_error:
 	lw gp, 56(sp)
 	lw $fp, 60(sp)
 	lw ra, 64(sp)
-	addu sp, sp, 72  # Se destruye stack frame
-	li v0, -1 	     # Devuelve un número negativo en caso de error
+	addu sp, sp, 72	  # Se destruye stack frame
+	li v0, -1 	  # Devuelve un número negativo en caso de error
 	jr ra
 
 	.end mips32_plot
@@ -382,17 +382,17 @@ itoa:
 			Arg Building Area (ABA) - No usada - 0 bytes - No se llama a ninguna otra funcion
 	*/
 
-						# debugging info: descripcion del stack frame
+				# debugging info: descripcion del stack frame
 	.frame  $fp, 8, ra 	# $fp: registro usado como frame pointer
-						# 8: tamaño del stack frame
-						# ra: registro que almacena el return address
+				# 8: tamaño del stack frame
+				# ra: registro que almacena el return address
 
-	.set    noreorder   # apaga reordenamiento de instrucciones
-	.cpload t9          # directiva usada para codigo PIC
-	.set    reorder     # enciende reordenamiento de instrucciones
+	.set    noreorder	# apaga reordenamiento de instrucciones
+	.cpload t9		# directiva usada para codigo PIC
+	.set    reorder		# enciende reordenamiento de instrucciones
 
-						# creo stack frame
-	subu sp, sp, 8  	# 2 (SRA) + 0 (LTA) + 0 (ABA)
+				# creo stack frame
+	subu sp, sp, 8		# 2 (SRA) + 0 (LTA) + 0 (ABA)
 
 	# El gp y FP van en las posiciones mas altas del stack frame
 	sw gp, 0(sp)
@@ -404,25 +404,25 @@ itoa:
 	# Se hace un back-up del número entero
 	sw a0, 8($fp)
 
-	li t4, 48 				# Es el número ascii del 0
+	li t4, 48 		# Es el número ascii del 0
 
 	beq a0, zero, return_0	# Si el número es igual a cero
 
-	li t5, 3 				# (bufferAux-1) es el índice del primer caracter del número
+	li t5, 3 		# (bufferAux-1) es el índice del primer caracter del número
 
 for_itoa:
 	beq a0, zero, end_for 	# Condición de corte (val == 0)
-	remu t6, a0, 10 		# t6 <- val % 10
-	addu t6, t6, t4 		# t6 <- t6 + 48 (Se calcula en base al ascii del cero qué número ascii corresponde)
+	remu t6, a0, 10 	# t6 <- val % 10
+	addu t6, t6, t4 	# t6 <- t6 + 48 (Se calcula en base al ascii del cero qué número ascii corresponde)
 	sb t6, bufferAux(t5)
 
 	subu t5, t5, 1
-	divu a0, a0, 10 		# val <- val / 10
+	divu a0, a0, 10 	# val <- val / 10
 
 	j for_itoa
 
 end_for:
-	addu t5, t5, 1 			# Se le suma 1 porque en la última iteración se le restó 1
+	addu t5, t5, 1 		# Se le suma 1 porque en la última iteración se le restó 1
 	la v0, bufferAux(t5)
 	li t0, BUF_SZ_AUX
 	subu v1, t0, t5
@@ -460,17 +460,17 @@ writeBuffer:
 			Arg Building Area (ABA) - No usada - 0 bytes - No se llama a ninguna otra funcion
 	*/
 
-						# debugging info: descripcion del stack frame
-	.frame  $fp, 8, ra  # $fp: registro usado como frame pointer
-						# 8: tamaño del stack frame
-						# ra: registro que almacena el return address
+				# debugging info: descripcion del stack frame
+	.frame  $fp, 8, ra 	# $fp: registro usado como frame pointer
+				# 8: tamaño del stack frame
+				# ra: registro que almacena el return address
 
-	.set    noreorder   # apaga reordenamiento de instrucciones
-	.cpload t9          # directiva usada para codigo PIC
-	.set    reorder     # enciende reordenamiento de instrucciones
+	.set    noreorder	# apaga reordenamiento de instrucciones
+	.cpload t9		# directiva usada para codigo PIC
+	.set    reorder		# enciende reordenamiento de instrucciones
 
-						# creo stack frame
-	subu sp, sp, 8      # 2 (SRA) + 0 (LTA) + 0 (ABA)
+				# creo stack frame
+	subu sp, sp, 8		# 2 (SRA) + 0 (LTA) + 0 (ABA)
 
 	# El gp y FP van en las posiciones mas altas del stack frame
 	sw gp, 0(sp)
@@ -509,7 +509,7 @@ return_w:
 	.size writeBuffer,.-writeBuffer
 
 	.data
-	.align 2 		    # alineacion 2^2
+	.align 2		# alineacion 2^2
 buffer: .space BUF_SZ
 	.align 2
 bufferAux: .space BUF_SZ_AUX
