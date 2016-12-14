@@ -417,7 +417,7 @@ for_itoa:
 	sb t6, bufferAux(t5)
 
 	subu t5, t5, 1
-	divu a0, a0, 10 	# val <- val / 10
+	divu a0, a0, 10		# val <- val / 10
 
 	j for_itoa
 
@@ -502,7 +502,7 @@ return_w:
 	lw a1, 12(sp) 
 	lw gp, 0(sp)
 	lw  $fp, 4(sp)
-	addu sp, sp, 8          # Se destruye stack frame
+	addu sp, sp, 8		# Se destruye stack frame
 	jr ra
 
 	.end writeBuffer
