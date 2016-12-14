@@ -28,7 +28,7 @@ extern int mips32_plot(param_t *);
 
 /*
  * Parametros globales.
- */
+*/
 
 int x_res = 640;		/* Ancho de imagen por defecto. */
 int y_res = 480;		/* Alto de imagen, por defecto. */
@@ -38,8 +38,6 @@ float lower_right_re = 1;	/* Extremo inferior derecho (re). */
 float lower_right_im = -1;	/* Extremo inferior derecho (im). */
 float c_param_re = 0.285;	/* Parametro C (re). */
 float c_param_im = -0.01;	/* Parametro C (im). */
-/* XXX Para que esta?? */
-//void (*draw)(FILE *) = NULL;	/* Metodo para generar el fractal. */
 FILE *output;
 
 static void parse_cmdline(int, char * const []);
@@ -53,18 +51,16 @@ static void do_width(const char *, const char *);
 static void do_height(const char *, const char *);
 static void do_output(const char *, const char *);
 
-int
-main(int argc, char * const argv[], char * const envp[])
-{
+int main(int argc, char * const argv[], char * const envp[]) {
+	
 	parse_cmdline(argc, argv);
 	plot();
 
 	return 0;
 }
 
-static void
-parse_cmdline(int argc, char * const argv[])
-{
+static void parse_cmdline(int argc, char * const argv[]) {
+
 	int ch;
 	int index = 0;
 
@@ -81,7 +77,7 @@ parse_cmdline(int argc, char * const argv[])
 	};
 
 	while ((ch = getopt_long(argc, argv, 
-	                         "hC:c:H:m:o:r:w:g:V", options, &index)) != -1) {
+							 "hC:c:H:m:o:r:w:g:V", options, &index)) != -1) {
 		switch (ch) {
 		case 'h':
 			do_usage(argv[0], 0);
@@ -121,26 +117,25 @@ parse_cmdline(int argc, char * const argv[])
 	}
 }
 
-static void
-do_usage(const char *name, int status)
-{
+static void do_usage(const char *name, int status) {
+
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "  %s -h\n", name);
 	fprintf(stderr, "  %s -V\n", name);
 	fprintf(stderr, "  %s [options]\n", name);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -r, --resolution "
-	                " Set bitmap resolution to WxH pixels.\n");
+					" Set bitmap resolution to WxH pixels.\n");
 	fprintf(stderr, "  -c, --center     "
-	                " Set coordinates for the center of the image.\n");
+					" Set coordinates for the center of the image.\n");
 	fprintf(stderr, "  -w, --width      "
-	                " Change the width of the spanned region.\n");
+					" Change the width of the spanned region.\n");
 	fprintf(stderr, "  -H, --height     "
-	                " Change the height of the spanned region.\n");
+					" Change the height of the spanned region.\n");
 	fprintf(stderr, "  -C, --cparam     "
-	                " Set c parameter.\n");
+					" Set c parameter.\n");
 	fprintf(stderr, "  -o, --output     "
-	                " Path to output file.\n");
+					" Path to output file.\n");
 	fprintf(stderr, "Examples:\n");
 	fprintf(stderr, "  %s -o output.pgm\n", name);
 	fprintf(stderr, "  %s -r 1600x1200 -o output.pgm\n", name);
@@ -148,25 +143,23 @@ do_usage(const char *name, int status)
 	exit(status);
 }
 
-static void
-do_version(const char *name)
-{
+static void do_version(const char *name) {
+
 	fprintf(stderr, "%s\n", VERSION);
 	exit(0);
 }
 
-static void
-do_resolution(const char *name, const char *spec)
-{
+static void do_resolution(const char *name, const char *spec) {
+
 	int x;
 	int y;
 	char c;
 	char d;
 
 	if (sscanf(spec, "%d%c%d %c", &x, &c, &y, &d) != 3
-	    || x <= 0
-	    || c != 'x'
-	    || y <= 0)
+		|| x <= 0
+		|| c != 'x'
+		|| y <= 0)
 		do_usage(name, 1);
 
 	/* Set new resolution. */
@@ -174,9 +167,8 @@ do_resolution(const char *name, const char *spec)
 	y_res = y;
 }
 
-static void
-do_geometry(const char *name, const char *spec)
-{
+static void do_geometry(const char *name, const char *spec) {
+
 	double re_1, im_1;
 	double re_2, im_2;
 	char comma;
@@ -190,22 +182,22 @@ do_geometry(const char *name, const char *spec)
 #define IMAGINARY_UNIT(x) ((x) == 'i' || (x) == 'j')
 
 	if (sscanf(spec, 
-	           "%lf %c %lf %c %c %lf %c %lf %c %c", 
-	           &re_1,
-	           &sg_1,
-	           &im_1,
-	           &ii_1,
-	           &comma,
-	           &re_2,
-	           &sg_2,
-	           &im_2,
-	           &ii_2,
-	           &ch) != 9
-	    || !PLUS_OR_MINUS(sg_1)
-	    || !PLUS_OR_MINUS(sg_2)
-	    || !IMAGINARY_UNIT(ii_1)
-	    || !IMAGINARY_UNIT(ii_2)
-	    || comma != ',') {
+			   "%lf %c %lf %c %c %lf %c %lf %c %c", 
+			   &re_1,
+			   &sg_1,
+			   &im_1,
+			   &ii_1,
+			   &comma,
+			   &re_2,
+			   &sg_2,
+			   &im_2,
+			   &ii_2,
+			   &ch) != 9
+		|| !PLUS_OR_MINUS(sg_1)
+		|| !PLUS_OR_MINUS(sg_2)
+		|| !IMAGINARY_UNIT(ii_1)
+		|| !IMAGINARY_UNIT(ii_2)
+		|| comma != ',') {
 		fprintf(stderr, "invalid geometry specification.\n");
 		exit(1);
 	}
@@ -223,16 +215,16 @@ do_geometry(const char *name, const char *spec)
 	 * (i.e. the one with minimum real part and maximum imaginary
 	 * part) and lower-right (maximum real part, minimum imaginary)
 	 * corners of the rectangle.
-	 */
+	*/
+
 	upper_left_re = MINIMUM(re_1, re_2);
 	upper_left_im = MAXIMUM(im_1, im_2);
 	lower_right_re = MAXIMUM(re_1, re_2);
 	lower_right_im = MINIMUM(im_1, im_2);
 }
 
-static void
-do_center(const char *name, const char *spec)
-{
+static void do_center(const char *name, const char *spec) {
+
 	double width;
 	double height;
 	double re, im;
@@ -241,14 +233,14 @@ do_center(const char *name, const char *spec)
 	char ch;
 
 	if (sscanf(spec, 
-	           "%lf %c %lf %c %c", 
-	           &re,
-	           &sg,
-	           &im,
-	           &ii,
-	           &ch) != 4
-	    || !PLUS_OR_MINUS(sg)
-	    || !IMAGINARY_UNIT(ii)) {
+			   "%lf %c %lf %c %c", 
+			   &re,
+			   &sg,
+			   &im,
+			   &ii,
+			   &ch) != 4
+		|| !PLUS_OR_MINUS(sg)
+		|| !IMAGINARY_UNIT(ii)) {
 		fprintf(stderr, "invalid center specification.\n");
 		exit(1);
 	}
@@ -263,23 +255,22 @@ do_center(const char *name, const char *spec)
 	lower_right_im = im - height / 2;
 }
 
-static void
-do_cparam(const char *name, const char *spec)
-{
+static void do_cparam(const char *name, const char *spec) {
+
 	double re, im;
 	char ii;
 	char sg;
 	char ch;
 
 	if (sscanf(spec, 
-	           "%lf %c %lf %c %c", 
-	           &re,
-	           &sg,
-	           &im,
-	           &ii,
-	           &ch) != 4
-	    || !PLUS_OR_MINUS(sg)
-	    || !IMAGINARY_UNIT(ii)) {
+			   "%lf %c %lf %c %c", 
+			   &re,
+			   &sg,
+			   &im,
+			   &ii,
+			   &ch) != 4
+		|| !PLUS_OR_MINUS(sg)
+		|| !IMAGINARY_UNIT(ii)) {
 		fprintf(stderr, "invalid cparam specification.\n");
 		exit(1);
 	}
@@ -289,19 +280,19 @@ do_cparam(const char *name, const char *spec)
 	c_param_re = re;
 	c_param_im = im;
 }
-static void
-do_height(const char *name, const char *spec)
-{
+
+static void do_height(const char *name, const char *spec) {
+
 	double width;
 	double height;
 	double re, im;
 	char ch;
 
 	if (sscanf(spec, 
-	           "%lf %c", 
-	           &height,
-	           &ch) != 1
-	    	|| height <= 0.0) {
+			   "%lf %c", 
+			   &height,
+			   &ch) != 1
+			|| height <= 0.0) {
 		fprintf(stderr, "invalid height specification.\n");
 		exit(1);
 	}
@@ -316,18 +307,17 @@ do_height(const char *name, const char *spec)
 	lower_right_im = im - height / 2;
 }
 
-static void
-do_width(const char *name, const char *spec)
-{
+static void do_width(const char *name, const char *spec) {
+
 	double width;
 	double height;
 	double re, im;
 	char ch;
 
 	if (sscanf(spec, 
-	           "%lf %c", 
-	           &width,
-	           &ch) != 1
+			   "%lf %c", 
+			   &width,
+			   &ch) != 1
 		|| width <= 0.0) {
 		fprintf(stderr, "invalid width specification.\n");
 		exit(1);
@@ -343,9 +333,8 @@ do_width(const char *name, const char *spec)
 	lower_right_im = im - height / 2;
 }
 
-static void
-do_output(const char *name, const char *spec)
-{
+static void do_output(const char *name, const char *spec) {
+
 	if (output != NULL) {
 		fprintf(stderr, "multiple do output files.");
 		exit(1);
@@ -361,9 +350,8 @@ do_output(const char *name, const char *spec)
 	}
 }
 
-static void
-plot(void)
-{
+static void plot(void) {
+
 	param_t parms;
 
 	memset(&parms, 0, sizeof(parms));

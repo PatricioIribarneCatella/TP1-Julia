@@ -5,6 +5,7 @@
 #
 # By now all shells must have functions.
 #
+
 error() {
 	# Alas, tput(1) is not portable so we can't use visual effects.
 	echo "ATTENTION:" 1>&2;

@@ -3,9 +3,8 @@
 #include <defs.h>
 #include <param.h>
 
-int
-mips32_plot(param_t *parms)
-{
+int mips32_plot(param_t *parms) {
+
 	float cr, ci;
 	float zr, zi;
 	float sr, si;
@@ -17,12 +16,15 @@ mips32_plot(param_t *parms)
 	float cpr = parms->cp_re;
 	float cpi = parms-> cp_im;
 	
-	// Notar que esta implementacion hace uso de un file pointer. Es no es
-	// lo que debe hacerse en MIPS32. Debe hacerse uso del syscall write
-	// con el file descriptor provisto en la estructura param_t
-	FILE *fp = fdopen(parms->fd, "w");	
+	/* Notar que esta implementacion hace uso de un file pointer. Es no es
+	 * lo que debe hacerse en MIPS32. Debe hacerse uso del syscall write
+	 * con el file descriptor provisto en la estructura param_t
+	*/
+
+	FILE *fp = fdopen(parms->fd, "w");
 
 	/* Header PGM. */
+
 	res = fprintf(fp, "P2\n%u\n%u\n%u\n",
 		(unsigned)parms->x_res,
 		(unsigned)parms->y_res,
@@ -36,7 +38,7 @@ mips32_plot(param_t *parms)
 	 * Barremos la region rectangular del plano complejo comprendida
 	 * entre (parms->UL_re, parms->UL_im) y (parms->LR_re, parms->LR_im).
 	 * El parametro de iteracion es el punto (cr, ci).
-	 */
+	*/
 
 	for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im) {
 
@@ -49,9 +51,10 @@ mips32_plot(param_t *parms)
 			 * Determinamos el nivel de brillo asociado al punto
 			 * (cr, ci), usando la formula compleja recurrente
 			 * f = f^2 + c.
-			 */
+			*/
 
 			for (c = 0; c < parms->shades; ++c) {
+
 				if ((absz = zr*zr + zi*zi) > 4.0f)
 					break;
 				sr = zr * zr - zi * zi + cpr;

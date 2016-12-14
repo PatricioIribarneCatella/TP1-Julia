@@ -6,12 +6,10 @@
  * Solaris 9 no tiene <stdint.h>
  */
 #define MISSING_STDINT_H
-
 /*
  * Tampoco parece estar <getopt.h>
  */
 #define MISSING_GETOPT
-
 /*
  * Includes complementarios.
  */
